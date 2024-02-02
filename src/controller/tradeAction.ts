@@ -58,7 +58,7 @@ export const buystock = async (req: Request, res: Response) => {
                     buyAT: indiaTime,
                     accessToken: alluserdata[i].access_key,
                     lessQuantity:false,
-                    tradeStatus: null,
+                    buytradeStatus: null,
                 });
             } else if (Number(totalprice) > Number(fund)) {
 
@@ -74,7 +74,7 @@ export const buystock = async (req: Request, res: Response) => {
                         buyAT: new Date(),
                         accessToken: alluserdata[i].access_key,
                         lessQuantity:true, 
-                        TradeStatus: null,
+                        buytradeStatus: null,
                     });
                 } else if (quantity === 0) {
                     userTradeEnter.push({
