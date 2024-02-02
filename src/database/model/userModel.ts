@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
-import moment from "moment-timezone";
 
-const indiaTimezone = 'Asia/Kolkata';
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };
 let indiaTime = buyAT.toLocaleString('en-US', options);

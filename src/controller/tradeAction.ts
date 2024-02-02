@@ -16,8 +16,8 @@ const ObjectId = mongoose.Types.ObjectId
 
 export const buystock = async (req: Request, res: Response) => {
     try {
-        let buyAT= new Date()
-        let options = {timeZone : 'Asia/kolkata',hour12 : false}
+        let buyAT = new Date()
+        let options = { timeZone: 'Asia/kolkata', hour12: false }
         let indiaTime = buyAT.toLocaleString('en-US', options)
         console.log('indiaTime', indiaTime)
         const fundObj = funddata["data"];
@@ -35,14 +35,14 @@ export const buystock = async (req: Request, res: Response) => {
             // quantity: body.quantity,
             product: body.product,
             buyPrice: body.price,
-            BuyTime : indiaTime 
+            buyAT: indiaTime
         })
-          
+
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
         const alluserdata = await userModel.find();
-        console.log('alluserdata', alluserdata)
+        console.log('👻alluserdata', alluserdata)
         let userTradeEnter: any = [];
         for (let i = 0; i < alluserdata.length; i++) {
             const id = alluserdata[i]._id;
@@ -52,11 +52,13 @@ export const buystock = async (req: Request, res: Response) => {
                 userTradeEnter.push({
                     trade_id: resultAdminTradeEnter._id,
                     user_id: id,
-                    order_id: "123456",
+                    buyOrderId: "123456",
                     quantity: body.quantity,
                     isSelled: false,
-                    buyAT: new Date(),
-                    accessToken: alluserdata[i].access_key
+                    buyAT: indiaTime,
+                    accessToken: alluserdata[i].access_key,
+                    lessQuantity:false,
+                    tradeStatus: null,
                 });
             } else if (Number(totalprice) > Number(fund)) {
 
@@ -70,7 +72,9 @@ export const buystock = async (req: Request, res: Response) => {
                         quantity: quantity,
                         isSelled: false,
                         buyAT: new Date(),
-                        accessToken: alluserdata[i].access_key
+                        accessToken: alluserdata[i].access_key,
+                        lessQuantity:true, 
+                        TradeStatus: null,
                     });
                 } else if (quantity === 0) {
                     userTradeEnter.push({
