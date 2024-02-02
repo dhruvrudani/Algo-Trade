@@ -88,8 +88,9 @@ export const buystock = async (req: Request, res: Response) => {
                 }
             }
         }
-        const insertdata = new userTrade({
+         const insertdata = new userTrade({
             trade: userTradeEnter
+            
         })
         var resultUserTradeEnter = await insertdata.save();
 
