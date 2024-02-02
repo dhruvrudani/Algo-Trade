@@ -21,3 +21,6 @@ vendor/
 
 # Ignore macOS directory attributes
 .DS_Store
+
+# Ignore build directory
+build/
