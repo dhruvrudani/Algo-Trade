@@ -37,12 +37,12 @@ const health = (req, res) => {
     message: "Node.js backend server is running",
     app: packageInfo.name,
     version: packageInfo.version,
-    author: "Webito infotech",
+    author: "MitCodeMode",
     license: packageInfo.license,
     contributors: [
       {
-        name: "Webito infotech",
-        email: "webitoinfotech@gmail.com"
+        name: " MitCodeMode",
+        email: "mitdobariya69@gmail.com"
       }
     ]
   });
