@@ -16,6 +16,7 @@ const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
 let indiaTime = usTime.toLocaleString('en-US', options)
+
 export const buystock = async (req: Request, res: Response) => {
     try {
 
@@ -147,7 +148,6 @@ export const sellstock = async (req: Request, res: Response) => {
                         for (let k = 0; k < data.length; k++) {
                             console.log(`trade user id ${data[k].user_id} and actual id ${id}`);
                             if (String(data[k].user_id) === String(id) && data[k].isSelled === false && data[k].quantity > 0 && counter !== 0) {
-
                                 counter = counter - data[k].quantity;
                                 const order_id = data[k].order_id;
                                 console.log("hello");
