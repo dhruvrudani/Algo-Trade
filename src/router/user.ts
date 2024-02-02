@@ -4,6 +4,13 @@ import { tradeAction, userController } from '../controller'
 import { userJWT } from '../helpers/jwt'
 const router = express.Router()
 
+const indiaTimezone = 'Asia/Kolkata';
+let buyAT = new Date();
+let options = { timeZone: 'Asia/Kolkata', hour12: false };
+let indiaTime = buyAT.toLocaleString('en-US', options);
+console.log('👻👻indianTime', indiaTime)
+
+
 //registration
 router.post('/signup', userValidation.signUp, userController.signUp) //complete
 

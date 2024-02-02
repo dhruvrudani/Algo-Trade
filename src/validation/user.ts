@@ -6,7 +6,6 @@ import { apiResponse } from '../common'
 
 //user registration
 export const signUp = async (req: Request, res: Response, next: any) => {
-    console.log("👻req....", req.body)
 
 var schema = Joi.object({phoneNumber: Joi.string().required().pattern(/^[0-9]{10}$/).messages({'any.required': 'phoneNumber is required','string.pattern.base': 'phoneNumber must be a 10-digit number'})})
 
