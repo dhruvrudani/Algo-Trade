@@ -150,7 +150,7 @@ export const sellstock = async (req: Request, res: Response) => {
                             if (String(data[k].user_id) === String(id) && data[k].isSelled === false && data[k].quantity > 0 && counter !== 0) {
                                 counter = counter - data[k].quantity;
                                 const order_id = data[k].order_id;
-                                console.log("hello");
+                                // console.log("hello");
                                 const updatedata = await userTrade.findOneAndUpdate({ "trade.order_id": order_id }, { $set: { "trade.$.isSelled": true , "trade.$.sellAt" : indiaTime} })
                             }
                         }
