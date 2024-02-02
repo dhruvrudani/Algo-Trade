@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+let buyAT = new Date();
+let options = { timeZone: 'Asia/Kolkata', hour12: false };
+let indiaTime = buyAT.toLocaleString('en-US', options);
+console.log('👻👻indianTime', indiaTime)
 
 const adminTradeSchema = new mongoose.Schema({
     tradingsymbol: { type: String, default: null },
@@ -9,8 +13,10 @@ const adminTradeSchema = new mongoose.Schema({
     product: { type: String, default: null },
     buyPrice: { type: Number, default: null },
     sellPrice: { type: Number, default: null },
-    buyAT: { type: Date, default: null },
-    sellAT: { type: Date, default: null }
+    buyOrderId: { type: Number, default: null },
+    buyAT: { type: String, default: null },
+    sellOrderId: { type: String, default: null },
+    sellAT: { type: String, default: null }
 })
 
 export const adminTrade = mongoose.model<any>('adminTrade', adminTradeSchema)

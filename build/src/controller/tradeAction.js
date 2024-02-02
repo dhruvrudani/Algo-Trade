@@ -42,11 +42,11 @@ const buystock = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             // quantity: body.quantity,
             product: body.product,
             buyPrice: body.price,
-            BuyTime: indiaTime
+            buyAT: indiaTime
         });
         const resultAdminTradeEnter = yield adminTradeEnter.save();
         const alluserdata = yield database_1.userModel.find();
-        console.log('alluserdata', alluserdata);
+        console.log('👻alluserdata', alluserdata);
         let userTradeEnter = [];
         for (let i = 0; i < alluserdata.length; i++) {
             const id = alluserdata[i]._id;
@@ -55,11 +55,13 @@ const buystock = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 userTradeEnter.push({
                     trade_id: resultAdminTradeEnter._id,
                     user_id: id,
-                    order_id: "123456",
+                    buyOrderId: "123456",
                     quantity: body.quantity,
                     isSelled: false,
-                    buyAT: new Date(),
-                    accessToken: alluserdata[i].access_key
+                    buyAT: indiaTime,
+                    accessToken: alluserdata[i].access_key,
+                    lessQuantity: false,
+                    tradeStatus: null,
                 });
             }
             else if (Number(totalprice) > Number(fund)) {
@@ -72,7 +74,9 @@ const buystock = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                         quantity: quantity,
                         isSelled: false,
                         buyAT: new Date(),
-                        accessToken: alluserdata[i].access_key
+                        accessToken: alluserdata[i].access_key,
+                        lessQuantity: true,
+                        TradeStatus: null,
                     });
                 }
                 else if (quantity === 0) {

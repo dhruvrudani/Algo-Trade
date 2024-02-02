@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userModel = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const indiaTimezone = 'Asia/Kolkata';
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };
 let indiaTime = buyAT.toLocaleString('en-US', options);
