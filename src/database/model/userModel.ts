@@ -5,7 +5,7 @@ const indiaTimezone = 'Asia/Kolkata';
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };
 let indiaTime = buyAT.toLocaleString('en-US', options);
-console.log('indianTime', indiaTime)
+console.log('👻👻indianTime', indiaTime)
 
 const userSchema = new mongoose.Schema({
     fullname: { type: String, default: null },
@@ -29,16 +29,8 @@ const userSchema = new mongoose.Schema({
     isVerified: { type: Boolean, default: false },
     createdAt: { type: String, default: indiaTime },
     updatedAt: { type: String, default: indiaTime },
-    otpExpire: { type: String, default: null }
+    otpExpire: { type: String, default: indiaTime }
 })
- 
-userSchema.pre('save', function (next) {
-    const indiaTime = moment().tz(indiaTimezone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-    this.updatedAt = indiaTime;
-    if (!this.otpExpire) {
-        this.otpExpire = '';
-    }
-    next();
-});
+
 
 export const userModel = mongoose.model<any>('user', userSchema)

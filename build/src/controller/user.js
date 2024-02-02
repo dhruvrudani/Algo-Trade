@@ -166,8 +166,9 @@ exports.signUp = signUp;
 const OtpVerification = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var body = req.body;
     let buyAT = new Date();
-    let options = { timeZone: 'Asia/kolkata', hour12: false };
-    let indiaTime = new Date(buyAT.toLocaleString('en-US', options));
+    let options = { timeZone: 'Asia/Kolkata', hour12: false };
+    let indiaTime = buyAT.toLocaleString('en-US', options);
+    console.log('indianTime', indiaTime);
     try {
         let otp = body.otp;
         let encodeotp = (0, encryptDecrypt_1.encryptData)(otp);
@@ -182,7 +183,7 @@ const OtpVerification = (req, res) => __awaiter(void 0, void 0, void 0, function
             // console.log(data.otpExpire.getMinutes())
             // console.log(data.otpExpire.getSeconds())
             if (data) {
-                let difference = indiaTime.getTime() - data.otpExpire.getTime();
+                let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
                 if (difference <= 60000) {
                     // console.log(difference)
                     if (data.otp === encodeotp) {
@@ -208,9 +209,8 @@ const OtpVerification = (req, res) => __awaiter(void 0, void 0, void 0, function
         else if (response.isVerified === true) { //login otp verification
             let data = yield database_1.userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false, isVerified: true });
             if (data) {
-                let difference = new Date().getTime() - data.otpExpire.getTime();
+                let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
                 if (difference <= 60000) {
-                    // console.log(difference)
                     if (data.otp === encodeotp) {
                         const payload = {
                             _id: data._id,

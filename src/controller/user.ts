@@ -184,9 +184,10 @@ export const signUp = async (req: Request, res: Response) => {
 
 export const OtpVerification = async (req: Request, res: Response) => {
     var body = req.body
-    let buyAT= new Date()
-        let options = {timeZone : 'Asia/kolkata',hour12 : false}
-        let indiaTime = new Date (buyAT.toLocaleString('en-US', options))
+    let buyAT = new Date();
+let options = { timeZone: 'Asia/Kolkata', hour12: false };
+let indiaTime = buyAT.toLocaleString('en-US', options);
+console.log('indianTime', indiaTime)
     try {
         let otp = body.otp
         let encodeotp = encryptData(otp)
@@ -206,7 +207,7 @@ export const OtpVerification = async (req: Request, res: Response) => {
             // console.log(data.otpExpire.getMinutes())
             // console.log(data.otpExpire.getSeconds())
             if (data) {
-                let difference = indiaTime.getTime() - (data.otpExpire as Date).getTime();
+                let difference =new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
 
                 if (difference <= 60000) {
                     // console.log(difference)
@@ -233,10 +234,9 @@ export const OtpVerification = async (req: Request, res: Response) => {
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false, isVerified: true })
             if (data) {
 
-                let difference = new Date().getTime() - data.otpExpire.getTime();
+                let difference =new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
 
                 if (difference <= 60000) {
-                    // console.log(difference)
                     if (data.otp === encodeotp) {
 
                         const payload = {

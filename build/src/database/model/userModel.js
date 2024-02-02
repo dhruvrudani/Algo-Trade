@@ -5,12 +5,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userModel = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-const moment_timezone_1 = __importDefault(require("moment-timezone"));
 const indiaTimezone = 'Asia/Kolkata';
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };
 let indiaTime = buyAT.toLocaleString('en-US', options);
-console.log('indianTime', indiaTime);
+console.log('👻👻indianTime', indiaTime);
 const userSchema = new mongoose_1.default.Schema({
     fullname: { type: String, default: null },
     phoneNumber: { type: String, default: null },
@@ -33,15 +32,7 @@ const userSchema = new mongoose_1.default.Schema({
     isVerified: { type: Boolean, default: false },
     createdAt: { type: String, default: indiaTime },
     updatedAt: { type: String, default: indiaTime },
-    otpExpire: { type: String, default: null }
-});
-userSchema.pre('save', function (next) {
-    const indiaTime = (0, moment_timezone_1.default)().tz(indiaTimezone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
-    this.updatedAt = indiaTime;
-    if (!this.otpExpire) {
-        this.otpExpire = '';
-    }
-    next();
+    otpExpire: { type: String, default: indiaTime }
 });
 exports.userModel = mongoose_1.default.model('user', userSchema);
 //# sourceMappingURL=userModel.js.map

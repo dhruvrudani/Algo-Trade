@@ -9,6 +9,11 @@ const validation_1 = require("../validation");
 const controller_1 = require("../controller");
 const jwt_1 = require("../helpers/jwt");
 const router = express_1.default.Router();
+const indiaTimezone = 'Asia/Kolkata';
+let buyAT = new Date();
+let options = { timeZone: 'Asia/Kolkata', hour12: false };
+let indiaTime = buyAT.toLocaleString('en-US', options);
+console.log('👻👻indianTime', indiaTime);
 //registration
 router.post('/signup', validation_1.userValidation.signUp, controller_1.userController.signUp); //complete
 //otpverificationn

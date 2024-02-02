@@ -37,7 +37,6 @@ const Joi = __importStar(require("joi"));
 const common_1 = require("../common");
 //user registration
 const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("👻req....", req.body);
     var schema = Joi.object({ phoneNumber: Joi.string().required().pattern(/^[0-9]{10}$/).messages({ 'any.required': 'phoneNumber is required', 'string.pattern.base': 'phoneNumber must be a 10-digit number' }) });
     schema.validateAsync(req.body).then(result => {
         return next();
