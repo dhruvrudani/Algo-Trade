@@ -8,7 +8,6 @@
 # Ignore IDE-specific files
 .idea/
 .vscode/
-package-lock.json
 
 # Ignore compiled binaries
 bin/
