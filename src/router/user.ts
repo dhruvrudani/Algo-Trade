@@ -1,6 +1,6 @@
 import express from 'express'
 import { userValidation } from '../validation'
-import { tradeAction, userController } from '../controller'
+import { tradeAction, userController} from '../controller'
 import { userJWT } from '../helpers/jwt'
 const router = express.Router()
 
@@ -19,6 +19,7 @@ router.post('/otpverification', userValidation.verificationOtp, userController.O
 router.patch('/updateuser', userValidation.updateuser, userController.updateUser) //complete
 router.post('/buytrade', tradeAction.buystock) //complete
 router.post('/selltrade', tradeAction.sellstock) //complete
+router.post('/quantity', tradeAction.getQuantity) //complete
 
 router.use(userJWT)
 

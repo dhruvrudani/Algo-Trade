@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     isDelete: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+    isKiteLogin: { type: Boolean, default: false },
     createdAt: { type: String, default: indiaTime },
     updatedAt: { type: String, default: indiaTime },
     otpExpire: { type: String, default: indiaTime }
