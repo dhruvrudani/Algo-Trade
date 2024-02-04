@@ -19,6 +19,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: pwd
-      - run: npm install --force
-      - run: npm run build
-      - run: pm2 start build/server.js --name="algo-trade"
+      - run: yarn install --force
+      - run: yarn run build
+      - run: pm2 restart all

@@ -1,7 +1,7 @@
 {
-  "name": "ALGO TRADE",
+  "name": "algo_trade",
   "version": "1.0.0",
-  "description": "",
+  "description": "algo trade",
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",
