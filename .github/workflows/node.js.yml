@@ -19,4 +19,5 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
       - run: npm install --force
-      - run: npm start
+      - run: npm run build
+      - run: pm2 start build/server.js --name="algo-trade"
