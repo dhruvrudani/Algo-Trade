@@ -48,9 +48,9 @@ export const buystock = async (req: Request, res: Response) => {
 
             const { _id: id, access_key, isKiteLogin } = userData;
             const quantityObj = await tradeQuantity.findOne({ user_id: id });
-            console.log('👻👻quantityObj', quantityObj)
             if (quantityObj) {
                 const { quantity } = quantityObj;
+                console.log('👻👻quantity', quantity)
                 const price = (quantity * body.price).toFixed(11);
                 const fund = Number(fundObj['equity'].net.toFixed(11));
 
@@ -130,15 +130,14 @@ export const buystock = async (req: Request, res: Response) => {
 export const sellstock = async (req: Request, res: Response) => {
     try {
         const body = req.body
-        const { id } = body;
+        const id = body.id;
         const price = body.quantity * body.price;
-        const totalprice = price.toFixed(11);
-        console.log('👻id', id);
+       
         const buyTradeData = await userTrade.findOne({ trade_id: id })
         const buyTradeId = buyTradeData.trade_id
 
         const buyTradeDataLength = buyTradeData.trade
-        console.log('👻buyTrades', buyTradeData, "👻", buyTradeId === id, "👻yoyo", buyTradeDataLength);
+    
         if (buyTradeId === id) {
 
             for (const sellData of buyTradeDataLength) {
@@ -147,13 +146,11 @@ export const sellstock = async (req: Request, res: Response) => {
             }
         }
 
-        return
         const adminTradeEnter: any = new adminTrade({
             tradingsymbol: body.tradingsymbol,
             exchange: body.exchange,
             transaction_type: body.transaction_type,
             order_type: body.order_type,
-            quantity: body.quantity,
             product: body.product,
             sellPrice: body.price,
             sellAT: indiaTime
@@ -162,22 +159,25 @@ export const sellstock = async (req: Request, res: Response) => {
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
         const alluserdata = await userModel.find();
-        const tradeData = await userTrade.find(body.id);
+        const tradeData = await userTrade.find();
         let sellUserData = [];
         if (tradeData) {
 
-            for (let i = 0; i < alluserdata.length; i++) {
-                const id = alluserdata[i]._id;
-                const quantity = await tradeQuantity.findById({ user_id: alluserdata[i]._id });
-
+            for (let userdata of alluserdata) {
+                const id = userdata._id;
+                let quantity = await tradeQuantity.findOne({ user_id: id });
+                quantity = quantity.quantity;
                 let counter = quantity;
-                if (counter !== 0 && alluserdata[i].isKiteLogin === true) {
-                    for (let j = 0; j < tradeData.length; j++) {
-                        let data = tradeData[j].trade;
-                        for (let k = 0; k < data.length; k++) {
-                            if (String(data[k].user_id) === String(id) && data[k].isSelled === false && data[k].quantity > 0 && counter !== 0 && data[k].tradingsymbol === body.tradingsymbol) {
-                                counter = counter - data[k].quantity;
-                                const order_id = data[k].buyOrderId;
+                if (counter !== 0 && userdata.isKiteLogin === true) {
+                    for (let trade of tradeData) {
+                        let data = trade.trade;
+
+                        for (let Onedata of data) {
+
+                            // console.log(Onedata);
+                            if (String(Onedata.user_id) === String(id) && Onedata.isSelled === false && Onedata.quantity > 0 && counter !== 0 && Onedata.tradingsymbol === body.tradingsymbol) {
+                                counter = counter - Onedata.quantity;
+                                const order_id = Onedata.buyOrderId;
                                 const updatedata = await userTrade.findOneAndUpdate({ "trade.buyOrderId": order_id }, { $set: { "trade.$.isSelled": true, "trade.$.sellAt": indiaTime, "trade.$.sellOrderId ": "9090" } })
                                 sellUserData.push(updatedata);
                             }
@@ -185,8 +185,10 @@ export const sellstock = async (req: Request, res: Response) => {
                     }
                 }
             }
-            return res.status(200).json(new apiResponse(200, "sell stock details", sellUserData, {}));
         }
+        console.log(sellUserData);
+        return res.status(200).json(new apiResponse(200, "sell stock details", sellUserData, {}));
+
 
         // kite.placeOrder(orderParams, (err, response) => {
         //     if (err) {
