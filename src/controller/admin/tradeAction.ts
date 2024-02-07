@@ -127,58 +127,140 @@ export const buystock = async (req: Request, res: Response) => {
 }
 
 // sell stock
+// export const sellstock = async (req: Request, res: Response) => {
+//     try {
+//         const body = req.body
+//         const id = body.id;
+//         const price = body.quantity * body.price;
+       
+//         const buyTradeData = await userTrade.findOne({ trade_id: id })
+//         const buyTradeId = buyTradeData.trade_id
+
+//         const buyTradeDataLength = buyTradeData.trade
+    
+//         if (buyTradeId === id) {
+
+//             for (const sellData of buyTradeDataLength) {
+//                 console.log('How many time runing ', sellData)
+//                 console.log('sellData.user_id', sellData.user_id)
+//             }
+//         }
+
+//         const adminTradeEnter: any = new adminTrade({
+//             tradingsymbol: body.tradingsymbol,
+//             exchange: body.exchange,
+//             transaction_type: body.transaction_type,
+//             order_type: body.order_type,
+//             product: body.product,
+//             sellPrice: body.price,
+//             sellAT: indiaTime
+//         })
+
+//         const resultAdminTradeEnter = await adminTradeEnter.save();
+
+//         const alluserdata = await userModel.find();
+//         const tradeData = await userTrade.find();
+//         let sellUserData = [];
+//         if (tradeData) {
+
+//             for (let userdata of alluserdata) {
+//                 const id = userdata._id;
+//                 let quantity = await tradeQuantity.findOne({ user_id: id });
+//                 quantity = quantity.quantity;
+//                 let counter = quantity;
+//                 if (counter !== 0 && userdata.isKiteLogin === true) {
+//                     for (let trade of tradeData) {
+//                         let data = trade.trade;
+
+//                         for (let Onedata of data) {
+
+//                             // console.log(Onedata);
+//                             if (String(Onedata.user_id) === String(id) && Onedata.isSelled === false && Onedata.quantity > 0 && counter !== 0 && Onedata.tradingsymbol === body.tradingsymbol) {
+//                                 counter = counter - Onedata.quantity;
+//                                 const order_id = Onedata.buyOrderId;
+//                                 const updatedata = await userTrade.findOneAndUpdate({ "trade.buyOrderId": order_id }, { $set: { "trade.$.isSelled": true, "trade.$.sellAt": indiaTime, "trade.$.sellOrderId ": "9090" } })
+//                                 sellUserData.push(updatedata);
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//         console.log(sellUserData);
+//         return res.status(200).json(new apiResponse(200, "sell stock details", sellUserData, {}));
+
+
+//         // kite.placeOrder(orderParams, (err, response) => {
+//         //     if (err) {
+//         //         console.error("Error placing order:", err);
+//         //     } else {
+//         //         console.log("Order placed successfully:", response);
+//         //     }
+//         // });
+
+
+//     } catch (error) {
+//         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
+//     }
+// }
+
 export const sellstock = async (req: Request, res: Response) => {
     try {
-        const body = req.body
-        const id = body.id;
-        const price = body.quantity * body.price;
-       
-        const buyTradeData = await userTrade.findOne({ trade_id: id })
-        const buyTradeId = buyTradeData.trade_id
+        const { id, quantity, price, tradingsymbol } = req.body;
 
-        const buyTradeDataLength = buyTradeData.trade
-    
-        if (buyTradeId === id) {
+        const buyTradeData = await userTrade.findOne({ trade_id: id });
 
-            for (const sellData of buyTradeDataLength) {
-                console.log('How many time runing ', sellData)
-                console.log('sellData.user_id', sellData.user_id)
+        if (buyTradeData && buyTradeData.trade_id === id) {
+            for (const sellData of buyTradeData.trade) {
+                console.log('How many times running ', sellData);
+                console.log('sellData.user_id', sellData.user_id);
             }
         }
 
-        const adminTradeEnter: any = new adminTrade({
-            tradingsymbol: body.tradingsymbol,
-            exchange: body.exchange,
-            transaction_type: body.transaction_type,
-            order_type: body.order_type,
-            product: body.product,
-            sellPrice: body.price,
-            sellAT: indiaTime
-        })
+        const adminTradeEnter = new adminTrade({
+            tradingsymbol,
+            exchange: req.body.exchange,
+            transaction_type: req.body.transaction_type,
+            order_type: req.body.order_type,
+            product: req.body.product,
+            sellPrice: price,
+            sellAT: indiaTime,
+        });
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
         const alluserdata = await userModel.find();
         const tradeData = await userTrade.find();
+
         let sellUserData = [];
+
         if (tradeData) {
-
-            for (let userdata of alluserdata) {
+            for (const userdata of alluserdata) {
                 const id = userdata._id;
-                let quantity = await tradeQuantity.findOne({ user_id: id });
-                quantity = quantity.quantity;
-                let counter = quantity;
-                if (counter !== 0 && userdata.isKiteLogin === true) {
-                    for (let trade of tradeData) {
-                        let data = trade.trade;
+                let quantity = (await tradeQuantity.findOne({ user_id: id }))?.quantity || 0;
 
-                        for (let Onedata of data) {
-
-                            // console.log(Onedata);
-                            if (String(Onedata.user_id) === String(id) && Onedata.isSelled === false && Onedata.quantity > 0 && counter !== 0 && Onedata.tradingsymbol === body.tradingsymbol) {
-                                counter = counter - Onedata.quantity;
+                if (quantity > 0 && userdata.isKiteLogin === true) {
+                    for (const trade of tradeData) {
+                        for (const Onedata of trade.trade) {
+                            if (
+                                String(Onedata.user_id) === String(id) &&
+                                !Onedata.isSelled &&
+                                Onedata.quantity > 0 &&
+                                quantity !== 0 &&
+                                Onedata.tradingsymbol === tradingsymbol
+                            ) {
+                                quantity -= Onedata.quantity;
                                 const order_id = Onedata.buyOrderId;
-                                const updatedata = await userTrade.findOneAndUpdate({ "trade.buyOrderId": order_id }, { $set: { "trade.$.isSelled": true, "trade.$.sellAt": indiaTime, "trade.$.sellOrderId ": "9090" } })
+                                const updatedata = await userTrade.findOneAndUpdate(
+                                    { "trade.buyOrderId": order_id },
+                                    {
+                                        $set: {
+                                            "trade.$.isSelled": true,
+                                            "trade.$.sellAt": indiaTime,
+                                            "trade.$.sellOrderId": "9090",
+                                        },
+                                    }
+                                );
                                 sellUserData.push(updatedata);
                             }
                         }
@@ -186,23 +268,16 @@ export const sellstock = async (req: Request, res: Response) => {
                 }
             }
         }
+
         console.log(sellUserData);
         return res.status(200).json(new apiResponse(200, "sell stock details", sellUserData, {}));
-
-
-        // kite.placeOrder(orderParams, (err, response) => {
-        //     if (err) {
-        //         console.error("Error placing order:", err);
-        //     } else {
-        //         console.log("Order placed successfully:", response);
-        //     }
-        // });
-
-
     } catch (error) {
-        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
+        return res
+            .status(500)
+            .json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
     }
-}
+};
+
 
 export const getQuantity = async (req: Request, res: Response) => {
     try {
