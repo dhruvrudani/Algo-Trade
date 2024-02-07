@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, default: null },
     email: { type: String, default: null },
     otp: { type: String, default: null },
+    role:{ type: Number, default :null },
     access_key: { type: String, default: "123" },
     z_user_id: { type: String, default: null },
     z_user_type: { type: String, default: null },
