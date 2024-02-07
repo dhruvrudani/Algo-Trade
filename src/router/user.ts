@@ -17,9 +17,7 @@ router.post('/otpverification', userValidation.verificationOtp, userController.O
 
 //update user details
 router.patch('/updateuser', userValidation.updateuser, userController.updateUser) //complete
-router.post('/buytrade', tradeAction.buystock) //complete
-router.post('/selltrade', tradeAction.sellstock) //complete
-router.post('/quantity', tradeAction.getQuantity) //complete
+
 
 router.use(userJWT)
 

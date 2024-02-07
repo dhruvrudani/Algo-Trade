@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 const userTradeSchema = new mongoose.Schema({
-    trade : {type:Array , default:[]}
+    trade_id: {type:String,default:null},
+    trade: { type: Array, default: [] }
 })
 
 // stockSchema.pre('save', function (next) {

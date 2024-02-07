@@ -1,2 +1,2 @@
-export * as userController from './user';
-export * as tradeAction from './tradeAction'
+export * as userController from './user/user';
+export * as tradeAction from './admin/tradeAction'
