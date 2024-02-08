@@ -60,6 +60,8 @@ export const get_user_quantity = async (req: Request, res: Response) => {
     }
  }
  
+}
+
 //get trade data for admin
 
 export const trade_get = async (req: Request, res: Response) => {
