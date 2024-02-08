@@ -20,9 +20,21 @@ let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
 let indiaTime = usTime.toLocaleString('en-US', options)
 
+// random number generator for order_id in sell trade and buy trade
+
+// Function to generate a random 5-digit number
+function generateRandomNumber() {
+    return Math.floor(10000 + Math.random() * 90000);
+}
+
+// Generate and print a random 5-digit number
+
+
+
 export const buystock = async (req: Request, res: Response) => {
     console.log('req.boy', req.body)
     try {
+        const random5DigitNumber = generateRandomNumber();
         console.log('👻indiaTime', indiaTime)
         const fundObj = funddata["data"];
         const body = req.body
@@ -31,6 +43,7 @@ export const buystock = async (req: Request, res: Response) => {
             exchange: body.exchange,
             transaction_type: body.transaction_type,
             order_type: body.order_type,
+            buyOrderId: random5DigitNumber,
             // quantity: body.quantity,
             product: body.product,
             buyPrice: body.price,
@@ -53,12 +66,12 @@ export const buystock = async (req: Request, res: Response) => {
                 console.log('👻👻quantity', quantity)
                 const price = (quantity * body.price).toFixed(11);
                 const fund = Number(fundObj['equity'].net.toFixed(11));
-
                 if (access_key && Number(price) <= fund) {
+                    const random5DigitNumber = generateRandomNumber();
                     userTradeEnter.push({
                         user_id: id,
                         tradingsymbol: body.tradingsymbol,
-                        buyOrderId: "123456",
+                        buyOrderId: random5DigitNumber,
                         quantity,
                         isSelled: false,
                         buyAT: indiaTime,
@@ -70,10 +83,11 @@ export const buystock = async (req: Request, res: Response) => {
                     const updatedQuantity = stockQuantity(quantity, fund, Number(price));
 
                     if (updatedQuantity > 0) {
+                        const random5DigitNumber = generateRandomNumber();
                         userTradeEnter.push({
                             user_id: id,
                             tradingsymbol: body.tradingsymbol,
-                            buyOrderId: "123456",
+                            buyOrderId: random5DigitNumber,
                             quantity: updatedQuantity,
                             isSelled: false,
                             buyAT: indiaTime,
@@ -126,83 +140,53 @@ export const buystock = async (req: Request, res: Response) => {
     }
 }
 
-// sell stock
+
 export const sellstock = async (req: Request, res: Response) => {
     try {
-        const body = req.body
-        const id = body.id;
-        const price = body.quantity * body.price;
-       
-        const buyTradeData = await userTrade.findOne({ trade_id: id })
-        const buyTradeId = buyTradeData.trade_id
+        const { id, sellPrice, tradingsymbol } = req.body;
 
-        const buyTradeDataLength = buyTradeData.trade
-    
-        if (buyTradeId === id) {
-
-            for (const sellData of buyTradeDataLength) {
-                console.log('How many time runing ', sellData)
-                console.log('sellData.user_id', sellData.user_id)
-            }
-        }
-
-        const adminTradeEnter: any = new adminTrade({
-            tradingsymbol: body.tradingsymbol,
-            exchange: body.exchange,
-            transaction_type: body.transaction_type,
-            order_type: body.order_type,
-            product: body.product,
-            sellPrice: body.price,
-            sellAT: indiaTime
-        })
-
-        const resultAdminTradeEnter = await adminTradeEnter.save();
-
-        const alluserdata = await userModel.find();
-        const tradeData = await userTrade.find();
+        const buyTradeData = await userTrade.findOne({ trade_id: id }); //same day trade details
+        const random5DigitNumber = generateRandomNumber();
+        const updateAdminTrade = await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellOrderId: random5DigitNumber, sellAT: indiaTime } });
         let sellUserData = [];
-        if (tradeData) {
-
-            for (let userdata of alluserdata) {
+        const alluserdata = await userModel.find();
+        for (const userdata of alluserdata) {
+            if (buyTradeData && buyTradeData.trade_id === id) {
                 const id = userdata._id;
-                let quantity = await tradeQuantity.findOne({ user_id: id });
-                quantity = quantity.quantity;
-                let counter = quantity;
-                if (counter !== 0 && userdata.isKiteLogin === true) {
-                    for (let trade of tradeData) {
-                        let data = trade.trade;
-
-                        for (let Onedata of data) {
-
-                            // console.log(Onedata);
-                            if (String(Onedata.user_id) === String(id) && Onedata.isSelled === false && Onedata.quantity > 0 && counter !== 0 && Onedata.tradingsymbol === body.tradingsymbol) {
-                                counter = counter - Onedata.quantity;
-                                const order_id = Onedata.buyOrderId;
-                                const updatedata = await userTrade.findOneAndUpdate({ "trade.buyOrderId": order_id }, { $set: { "trade.$.isSelled": true, "trade.$.sellAt": indiaTime, "trade.$.sellOrderId ": "9090" } })
-                                sellUserData.push(updatedata);
-                            }
+                let quantity = (await tradeQuantity.findOne({ user_id: id }))?.quantity || 0;
+                if (quantity > 0 && userdata.isKiteLogin === true) {
+                    for (const sellData of buyTradeData.trade) {
+                        if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === tradingsymbol) {
+                            // add kite API
+                            quantity -= sellData.quantity;
+                            const order_id = sellData.buyOrderId;
+                            console.log(order_id)
+                            const random5DigitNumber = generateRandomNumber();
+                            const updatedata = await userTrade.updateOne(
+                                { "trade.user_id": id, "trade.buyOrderId": order_id },
+                                {
+                                    $set: {
+                                        "trade.$.isSelled": true,
+                                        "trade.$.sellAt": indiaTime,
+                                        "trade.$.sellOrderId": random5DigitNumber,
+                                        "trade.$.sellPrice": sellPrice
+                                    },
+                                });
+                            const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
+                            sellUserData.push(data);
                         }
                     }
                 }
             }
         }
-        console.log(sellUserData);
         return res.status(200).json(new apiResponse(200, "sell stock details", sellUserData, {}));
-
-
-        // kite.placeOrder(orderParams, (err, response) => {
-        //     if (err) {
-        //         console.error("Error placing order:", err);
-        //     } else {
-        //         console.log("Order placed successfully:", response);
-        //     }
-        // });
-
-
     } catch (error) {
-        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
+        return res
+            .status(500)
+            .json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
     }
-}
+};
+
 
 export const getQuantity = async (req: Request, res: Response) => {
     try {
@@ -243,51 +227,3 @@ export const getQuantity = async (req: Request, res: Response) => {
 };
 
 
-export const get_user_quantity = async (req: Request, res: Response) => {
-    const { filter, id } = req.body;
-    console.log('👻👻', filter, id);
-
-    try {
-        let userData = null;
-
-        if (filter === 0) {
-            const data = await tradeQuantity.aggregate([
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "user_id",
-                        foreignField: "_id",
-                        as: "user_data"
-                    }
-                }
-            ]);
-            userData = data;
-        } else if (filter === 1) {
-            const user = await userModel.findById(id);
-            if (!user) {
-                return res.status(404).json(new apiResponse(404, "User not found", {}, {}));
-            }
-            const data = await tradeQuantity.aggregate([
-                {
-                    $match: { user_id: new ObjectId(id) }
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "user_id",
-                        foreignField: "_id",
-                        as: "user_data"
-                    }
-                }
-            ]);
-            userData = data;
-        } else {
-            return res.status(400).json(new apiResponse(400, "Invalid filter value", {}, {}));
-        }
-
-        return res.status(200).json(new apiResponse(200, "User data fetched successfully", { userData }, {}));
-    } catch (error) {
-        console.error('Error:', error);
-        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
-    }
-}
