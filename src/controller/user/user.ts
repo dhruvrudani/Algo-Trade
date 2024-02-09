@@ -4,6 +4,7 @@ import { userModel } from "../../database";
 import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import { responseMessage } from "../../helpers/response";
+import { kitelogin } from "../../helpers/kiteTradeAction";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose, { Collection } from "mongoose";
 import { Request, Response } from 'express'
@@ -18,33 +19,7 @@ const kite = new KiteConnect({
 export const getUser = async (req: Request, res: Response) => {
     try {
 
-
-        // Now you can use the instance to get the login URL
-        // const loginURL = kite.getLoginURL();
-
-        // console.log("Login URL:", loginURL);
-        // const requestToken = "";
-        // var accesstoken;
-        // kite.generateSession(requestToken, config.get('api_secret'))
-        //     .then(response => {
-        //         accesstoken = response.access_token;
-        //     })
-        //     .catch(error => {
-        //         console.log("Error when generating the access token", error)
-        //     })
-
-        // kite.setAccessToken(accesstoken);
-
-        // kite.getProfile((error, data) => {
-        //     if (error) {
-        //         console.log("getting error while get profile of the user", error);
-        //     } else if (data) {
-        //         console.log("user data is", data);
-        //     }
-        // })
-        // return res.status(200).send(loginURL)
-
-        // console.log(data)
+        //const jsondata = kitelogin(requestToken)
         const data = jsondata["data"];
         // console.log(data);
         const body = req.body;

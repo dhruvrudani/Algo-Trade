@@ -5,16 +5,14 @@ import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
-import { stockQuantity } from "../../helpers/testing";
+import { stockQuantity} from "../../helpers/testing";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
-import { builtinModules, findSourceMap } from "module";
 import { ObjectId } from 'mongoose';
 const jsondata = data;
 const funddata = fund;
-const { Types } = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
