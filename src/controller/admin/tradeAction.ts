@@ -162,7 +162,7 @@ export const sellstock = async (req: Request, res: Response) => {
                             const order_id = sellData.buyOrderId;
                             console.log(order_id)
                             const random5DigitNumber = generateRandomNumber();
-                            const updatedata = await userTrade.updateOne(
+                            await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                                 {
                                     $set: {
@@ -173,7 +173,11 @@ export const sellstock = async (req: Request, res: Response) => {
                                     },
                                 });
                             const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
-                            sellUserData.push(data);
+                            for (const tradeData of data.trade) {
+                                if (String(tradeData.user_id) === String(id)) {
+                                    sellUserData.push(tradeData)
+                                }
+                            }
                         }
                     }
                 }
