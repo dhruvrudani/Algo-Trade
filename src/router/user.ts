@@ -1,6 +1,6 @@
 import express from 'express'
 import { userValidation } from '../validation'
-import { tradeAction, userController} from '../controller'
+import { tradeAction, userController } from '../controller'
 import { userJWT } from '../helpers/jwt'
 const router = express.Router()
 
@@ -20,6 +20,8 @@ router.patch('/updateuser', userValidation.updateuser, userController.updateUser
 
 
 router.use(userJWT)
+
+
 
 //delete user
 router.delete('/delete', userValidation.deletes, userController.deleteuser) //complete

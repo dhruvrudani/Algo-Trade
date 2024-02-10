@@ -127,7 +127,7 @@ export const getFundsAndMargins = async (accessToken) => {
 
 }
 
-//get all order (one Day only) of perticular userff
+//get all order (one Day only) of perticular user
 
 export const retrieveOrders = async (accessToken) => {
     kite.setAccessToken(accessToken);
@@ -140,3 +140,4 @@ export const retrieveOrders = async (accessToken) => {
         }
     });
 }
+

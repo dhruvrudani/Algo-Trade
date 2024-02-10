@@ -244,3 +244,25 @@ export const getQuantity = async (req: Request, res: Response) => {
         return res.status(500).json(new apiResponse(500, "Internal Server Error", {}, error));
     }
 };
+
+//set the request token in the data base
+
+export const login = async (req: Request, res: Response) => {
+    try {
+        const request_token = req.query.request_token;
+        const body = req.body;
+        if (request_token) {
+            const data = await userModel.findOne({ _id: body.id });
+            if (data) {
+                const updatedata = await userModel.findOneAndUpdate({ _id: body.id }, { $set: { request_token } })
+                return res.status(200).json(new apiResponse(200, "access token", { request_token }, {}));
+            } else {
+                return res.status(402).json(new apiResponse(402, "in valid user id", {}, {}));
+            }
+        } else {
+            return res.status(402).json(new apiResponse(402, "request token is required", {}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, "Internal Server Error", {}, error));
+    }
+}
