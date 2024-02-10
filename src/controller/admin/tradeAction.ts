@@ -6,7 +6,7 @@ import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
 import { stockQuantity } from "../../helpers/testing";
-import { buy , sell} from "../../helpers/kiteTradeAction";
+import { buy, sell, getFundsAndMargins } from "../../helpers/kiteTradeAction";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -31,11 +31,8 @@ function generateRandomNumber() {
 
 
 export const buystock = async (req: Request, res: Response) => {
-    console.log('req.boy', req.body)
     try {
         const random5DigitNumber = generateRandomNumber();
-        console.log('👻indiaTime', indiaTime)
-        const fundObj = funddata["data"];
         const body = req.body
         const adminTradeEnter: any = new adminTrade({
             tradingsymbol: body.tradingsymbol,
@@ -52,15 +49,17 @@ export const buystock = async (req: Request, res: Response) => {
 
         const alluserdata = await userModel.find();
         let userTradeEnter: any = [];
-        console.log('👻resultAdminTradeEnter', resultAdminTradeEnter, "allUserData", alluserdata)
-
         for (const userData of alluserdata) {
+
+            //get user trade and margin
+            // getFundsAndMargins(userData.access_key);
+
+            const fundObj = funddata["data"];
 
             const { _id: id, access_key, isKiteLogin } = userData;
             const quantityObj = await tradeQuantity.findOne({ user_id: id });
             if (quantityObj) {
                 const { quantity } = quantityObj;
-                console.log('👻👻quantity', quantity)
                 const price = (quantity * body.price).toFixed(11);
                 const fund = Number(fundObj['equity'].net.toFixed(11));
                 if (access_key && Number(price) <= fund) {
@@ -103,7 +102,7 @@ export const buystock = async (req: Request, res: Response) => {
                             order_type: body.order_type,
                             product: body.product
                         };
-    
+
                         buy(data);
                         userTradeEnter.push({
                             user_id: id,
@@ -128,30 +127,14 @@ export const buystock = async (req: Request, res: Response) => {
             else {
                 console.log('User not found in tradeQuantity collection:', id);
             }
-            console.log('✨🔥✨✨userTradeEnter', userTradeEnter);
         }
-
-        console.log('👻👻userTradeEnter', userTradeEnter)
         const insertdata = new userTrade(
             {
                 trade_id: resultAdminTradeEnter._id,
                 trade: userTradeEnter
             });
 
-        console.log('👻insertdata', insertdata)
         const resultUserTradeEnter = await insertdata.save();
-
-
-
-        // kite.placeOrder(orderParams, (err, response) => {
-        //     if (err) {
-        //         console.error("Error placing order:", err);
-        //     } else {
-        //         console.log("Order placed successfully:", response);
-        //     }
-        // });
-
-        // console.log(orderParams);
 
         return res.status(200).json(new apiResponse(200, "buy stock details", { resultAdminTradeEnter, resultUserTradeEnter }, {}));
 
@@ -166,7 +149,7 @@ export const sellstock = async (req: Request, res: Response) => {
     try {
         const { id, sellPrice, tradingsymbol } = req.body;
         const body = req.body
-        const buyTradeData = await userTrade.findOne({ trade_id: id }); //same day trade details
+        const buyTradeData = await userTrade.findOne({ trade_id: id });
         const random5DigitNumber = generateRandomNumber();
         const updateAdminTrade = await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellOrderId: random5DigitNumber, sellAT: indiaTime } });
         let sellUserData = [];
@@ -178,11 +161,11 @@ export const sellstock = async (req: Request, res: Response) => {
                 if (quantity > 0 && userdata.isKiteLogin === true) {
                     for (const sellData of buyTradeData.trade) {
                         if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === tradingsymbol) {
-                            // add kite API
                             quantity -= sellData.quantity;
                             const order_id = sellData.buyOrderId;
                             console.log(order_id)
                             const random5DigitNumber = generateRandomNumber();
+
                             const sellrequireddata: any = {
                                 access_key: sellData.access_key,
                                 id: id,
@@ -192,7 +175,7 @@ export const sellstock = async (req: Request, res: Response) => {
                                 order_type: body.order_type,
                                 product: body.product
                             };
-        
+
                             sell(sellrequireddata);
                             await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
