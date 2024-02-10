@@ -18,7 +18,6 @@ const kite = new KiteConnect({
 
 export const getUser = async (req: Request, res: Response) => {
     try {
-
         const jsondata = kitelogin()
         // const data = jsondata["data"];
         // // console.log(data);
@@ -58,14 +57,11 @@ export const signUp = async (req: Request, res: Response) => {
             isActive: true,
             isDelete: false
         });
-        console.log('🔥🔥🔥isAlready', isAlready)
-        console.log('🔥🔥🔥isAlready && isAlready.fullname === null', isAlready && isAlready.fullname === null)
         if (isAlready && isAlready.fullname === null) {
 
             let phoneNumber = body.phoneNumber
             let OTPcode: any = Math.floor(100000 + Math.random() * 900000);
             const encryptedCode = await encryptData(OTPcode)
-            console.log("👻encryptedCode", encryptedCode)
             var OTP = OTPcode
             const bodyData = {
                 ...body,
@@ -75,7 +71,6 @@ export const signUp = async (req: Request, res: Response) => {
 
             const updateuser = await userModel.findOneAndUpdate({ phoneNumber: phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData })
             bodyData.otpCode = OTPcode
-            console.log('🔥🔥updateuser1', updateuser)
             return res.status(200).json(new apiResponse(200, responseMessage.otpSend, bodyData, {}));
 
         }
@@ -178,7 +173,6 @@ export const OtpVerification = async (req: Request, res: Response) => {
     let buyAT = new Date();
     let options = { timeZone: 'Asia/Kolkata', hour12: false };
     let indiaTime = buyAT.toLocaleString('en-US', options);
-    console.log('👻indianTime', indiaTime)
     try {
         let otp = body.otp
         let encodeotp = encryptData(otp)
@@ -194,14 +188,10 @@ export const OtpVerification = async (req: Request, res: Response) => {
 
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false })
 
-            // console.log(new Date().getTime())
-            // console.log(data.otpExpire.getMinutes())
-            // console.log(data.otpExpire.getSeconds())
             if (data) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
 
                 if (difference <= 60000) {
-                    // console.log(difference)
                     if (data.otp === encodeotp) {
                         let updatedata = {
                             isVerified: true, otp: null

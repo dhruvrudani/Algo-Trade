@@ -111,3 +111,32 @@ export const sell = async (data) => {
         console.error(`Error placing order for user ${id}:`, error);
     }
 }
+
+//funds and margins
+
+export const getFundsAndMargins = async (accessToken) => {
+    kite.setAccessToken(accessToken);
+
+    kite.getMargins({}, (error, response) => {
+        if (error) {
+            console.error("Error fetching margins:", error);
+        } else {
+            return response;
+        }
+    });
+
+}
+
+//get all order (one Day only) of perticular userff
+
+export const retrieveOrders = async (accessToken) => {
+    kite.setAccessToken(accessToken);
+
+    kite.getOrders({}, (error, response) => {
+        if (error) {
+            console.error("Error fetching orders:", error);
+        } else {
+            return (response);
+        }
+    });
+}
