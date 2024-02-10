@@ -6,7 +6,7 @@ import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
 import { stockQuantity } from "../../helpers/testing";
-import { buy } from "../../helpers/kiteTradeAction";
+import { buy , sell} from "../../helpers/kiteTradeAction";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -65,8 +65,17 @@ export const buystock = async (req: Request, res: Response) => {
                 const fund = Number(fundObj['equity'].net.toFixed(11));
                 if (access_key && Number(price) <= fund) {
                     const random5DigitNumber = generateRandomNumber();
+                    const data: any = {
+                        access_key: userData.access_key,
+                        id: id,
+                        tradingsymbol: body.tradingsymbol,
+                        quantity: quantity,
+                        exchange: body.exchange,
+                        order_type: body.order_type,
+                        product: body.product
+                    };
 
-                    buy(userData.access_key, id, body.tradingsymbol, quantity , body.exchange ,body.order_type,body.product);
+                    buy(data);
 
                     userTradeEnter.push({
                         user_id: id,
@@ -83,7 +92,19 @@ export const buystock = async (req: Request, res: Response) => {
                     const updatedQuantity = stockQuantity(quantity, fund, Number(price));
 
                     if (updatedQuantity > 0) {
+
                         const random5DigitNumber = generateRandomNumber();
+                        const data: any = {
+                            access_key: userData.access_key,
+                            id: id,
+                            tradingsymbol: body.tradingsymbol,
+                            quantity: quantity,
+                            exchange: body.exchange,
+                            order_type: body.order_type,
+                            product: body.product
+                        };
+    
+                        buy(data);
                         userTradeEnter.push({
                             user_id: id,
                             tradingsymbol: body.tradingsymbol,
@@ -144,7 +165,7 @@ export const buystock = async (req: Request, res: Response) => {
 export const sellstock = async (req: Request, res: Response) => {
     try {
         const { id, sellPrice, tradingsymbol } = req.body;
-
+        const body = req.body
         const buyTradeData = await userTrade.findOne({ trade_id: id }); //same day trade details
         const random5DigitNumber = generateRandomNumber();
         const updateAdminTrade = await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellOrderId: random5DigitNumber, sellAT: indiaTime } });
@@ -162,6 +183,17 @@ export const sellstock = async (req: Request, res: Response) => {
                             const order_id = sellData.buyOrderId;
                             console.log(order_id)
                             const random5DigitNumber = generateRandomNumber();
+                            const sellrequireddata: any = {
+                                access_key: sellData.access_key,
+                                id: id,
+                                tradingsymbol: body.tradingsymbol,
+                                quantity: quantity,
+                                exchange: body.exchange,
+                                order_type: body.order_type,
+                                product: body.product
+                            };
+        
+                            sell(sellrequireddata);
                             await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                                 {

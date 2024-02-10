@@ -57,19 +57,19 @@ export const kitelogin = async () => {
     }
 };
 
-//incomplete
-export const buy = async (accessToken, userId, symbol, quantity, exchange, order_type, product) => {
+//buy ordedr API
+export const buy = async (data) => {
 
-
-    kite.setAccessToken(accessToken);
+    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    kite.setAccessToken(access_key);
 
     try {
-        const response = await kite.ltp([symbol]);
-        const instrumentToken = response[symbol].instrument_token;
+        const response = await kite.ltp([tradingsymbol]);
+        const instrumentToken = response[tradingsymbol].instrument_token;
 
         // Place a market order to buy
-        const orderResponse = await kite.placeOrder(userId, "regular", {
-            tradingsymbol: symbol,
+        const orderResponse = await kite.placeOrder(id, "regular", {
+            tradingsymbol: tradingsymbol,
             exchange: exchange,
             transaction_type: "BUY",
             order_type: order_type,
@@ -77,10 +77,37 @@ export const buy = async (accessToken, userId, symbol, quantity, exchange, order
             product: product,
         });
         if (orderResponse) {
-            console.log(`Order placed successfully for user ${userId}:`, orderResponse);
+            console.log(`Order placed successfully for user ${id}:`, orderResponse);
         }
     } catch (error) {
-        console.error(`Error placing order for user ${userId}:`, error);
+        console.error(`Error placing order for user ${id}:`, error);
     }
+}
 
+//sell order API
+
+export const sell = async (data) => {
+
+    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    kite.setAccessToken(access_key);
+
+    try {
+        const response = await kite.ltp([tradingsymbol]);
+        const instrumentToken = response[tradingsymbol].instrument_token;
+
+        // Place a market order to buy
+        const orderResponse = await kite.placeOrder(id, "regular", {
+            tradingsymbol: tradingsymbol,
+            exchange: exchange,
+            transaction_type: "SELL",
+            order_type: order_type,
+            quantity,
+            product: product,
+        });
+        if (orderResponse) {
+            console.log(`Order placed successfully for user ${id}:`, orderResponse);
+        }
+    } catch (error) {
+        console.error(`Error placing order for user ${id}:`, error);
+    }
 }
