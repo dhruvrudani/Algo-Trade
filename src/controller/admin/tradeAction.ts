@@ -55,7 +55,7 @@ export const buystock = async (req: Request, res: Response) => {
                 const fund = Number(fundObj['equity'].net.toFixed(11));
 
                 if (access_key && Number(price) <= fund) {
-                    const random5DigitNumber = generateRandomNumber();
+                    // const random5DigitNumber = generateRandomNumber();
 
                     buy(userData.access_key, id, body.tradingsymbol, quantity , body.exchange ,body.order_type,body.product);
 
