@@ -4,11 +4,11 @@ import { userModel } from "../../database";
 import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import { responseMessage } from "../../helpers/response";
+import { kitelogin } from "../../helpers/kiteTradeAction";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose, { Collection } from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
-import { kitelogin } from "../../helpers/kiteTradeAction";
 const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect

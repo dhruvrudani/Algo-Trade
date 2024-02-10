@@ -11,11 +11,9 @@ import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
-import { builtinModules, findSourceMap } from "module";
 import { ObjectId } from 'mongoose';
 const jsondata = data;
 const funddata = fund;
-const { Types } = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
@@ -44,7 +42,6 @@ export const buystock = async (req: Request, res: Response) => {
             exchange: body.exchange,
             transaction_type: body.transaction_type,
             order_type: body.order_type,
-            buyOrderId: random5DigitNumber,
             product: body.product,
             buyPrice: body.price,
             buyAT: indiaTime
@@ -67,11 +64,10 @@ export const buystock = async (req: Request, res: Response) => {
                 const price = (quantity * body.price).toFixed(11);
                 const fund = Number(fundObj['equity'].net.toFixed(11));
                 if (access_key && Number(price) <= fund) {
-                    // const random5DigitNumber = generateRandomNumber();
+                    const random5DigitNumber = generateRandomNumber();
 
                     buy(userData.access_key, id, body.tradingsymbol, quantity , body.exchange ,body.order_type,body.product);
 
-                    const random5DigitNumber = generateRandomNumber();
                     userTradeEnter.push({
                         user_id: id,
                         tradingsymbol: body.tradingsymbol,
@@ -166,7 +162,7 @@ export const sellstock = async (req: Request, res: Response) => {
                             const order_id = sellData.buyOrderId;
                             console.log(order_id)
                             const random5DigitNumber = generateRandomNumber();
-                            const updatedata = await userTrade.updateOne(
+                            await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                                 {
                                     $set: {
@@ -177,7 +173,11 @@ export const sellstock = async (req: Request, res: Response) => {
                                     },
                                 });
                             const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
-                            sellUserData.push(data);
+                            for (const tradeData of data.trade) {
+                                if (String(tradeData.user_id) === String(id)) {
+                                    sellUserData.push(tradeData)
+                                }
+                            }
                         }
                     }
                 }
@@ -229,5 +229,3 @@ export const getQuantity = async (req: Request, res: Response) => {
         return res.status(500).json(new apiResponse(500, "Internal Server Error", {}, error));
     }
 };
-
-
