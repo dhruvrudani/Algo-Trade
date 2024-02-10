@@ -5,7 +5,8 @@ import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
-import { stockQuantity} from "../../helpers/testing";
+import { stockQuantity } from "../../helpers/testing";
+import { buy } from "../../helpers/kiteTradeAction";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -41,8 +42,6 @@ export const buystock = async (req: Request, res: Response) => {
             exchange: body.exchange,
             transaction_type: body.transaction_type,
             order_type: body.order_type,
-            buyOrderId: random5DigitNumber,
-            // quantity: body.quantity,
             product: body.product,
             buyPrice: body.price,
             buyAT: indiaTime
@@ -66,6 +65,9 @@ export const buystock = async (req: Request, res: Response) => {
                 const fund = Number(fundObj['equity'].net.toFixed(11));
                 if (access_key && Number(price) <= fund) {
                     const random5DigitNumber = generateRandomNumber();
+
+                    buy(userData.access_key, id, body.tradingsymbol, quantity , body.exchange ,body.order_type,body.product);
+
                     userTradeEnter.push({
                         user_id: id,
                         tradingsymbol: body.tradingsymbol,

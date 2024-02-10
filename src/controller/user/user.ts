@@ -19,38 +19,35 @@ const kite = new KiteConnect({
 export const getUser = async (req: Request, res: Response) => {
     try {
 
-        //const jsondata = kitelogin(requestToken)
-        const data = jsondata["data"];
-        // console.log(data);
-        const body = req.body;
-        const userdata = await userModel.findOneAndUpdate({
-            _id: body.id,
-            isActive: true, isDelete: false, isVerified: true
-        }, {
-            $set: {
-                access_key: "123",
-                z_user_id: data.user_id,
-                z_user_type: data.user_type,
-                z_email: data.email,
-                z_user_name: data.user_name,
-                z_user_shortname: data.user_shortname,
-                z_broker: data.broker,
-                z_exchanges: data.exchanges,
-                z_products: data.products,
-                z_order_types: data.order_types,
-                z_avatar_url: data.avatar_url,
-                z_meta: data.meta
-            }
-        }, { new: true })
-        return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
+        const jsondata = kitelogin()
+        // const data = jsondata["data"];
+        // // console.log(data);
+        // const body = req.body;
+        // const userdata = await userModel.findOneAndUpdate({
+        //     _id: body.id,
+        //     isActive: true, isDelete: false, isVerified: true
+        // }, {
+        //     $set: {
+        //         access_key: "123",
+        //         z_user_id: data.user_id,
+        //         z_user_type: data.user_type,
+        //         z_email: data.email,
+        //         z_user_name: data.user_name,
+        //         z_user_shortname: data.user_shortname,
+        //         z_broker: data.broker,
+        //         z_exchanges: data.exchanges,
+        //         z_products: data.products,
+        //         z_order_types: data.order_types,
+        //         z_avatar_url: data.avatar_url,
+        //         z_meta: data.meta
+        //     }
+        // }, { new: true })
+        // return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
 
     } catch (error) {
         return res.status(500).send(error)
     }
 }
-
-//buy stock
-
 
 // signup API
 export const signUp = async (req: Request, res: Response) => {
