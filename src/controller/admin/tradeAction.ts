@@ -4,9 +4,8 @@ import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database"
 import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
-import { responseMessage } from "../../helpers/response";
-import { stockQuantity } from "../../helpers/testing";
-import { buy, sell, getFundsAndMargins } from "../../helpers/kiteTradeAction";
+import { responseMessage, stockQuantity } from "../../helpers/index";
+import { buy, sell, getFundsAndMargins } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'

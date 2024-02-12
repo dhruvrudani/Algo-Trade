@@ -4,7 +4,7 @@ import { userModel } from "../../database";
 import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import { responseMessage } from "../../helpers/response";
-import { kitelogin } from "../../helpers/kiteTradeAction";
+import { kitelogin } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose, { Collection } from "mongoose";
 import { Request, Response } from 'express'
