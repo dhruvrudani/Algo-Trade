@@ -110,6 +110,7 @@ export const buystock = async (req: Request, res: Response) => {
                             buyOrderId: random5DigitNumber,
                             quantity: updatedQuantity,
                             isSelled: false,
+                            buyKitePrice: 100,
                             buyAT: indiaTime,
                             accessToken: access_key,
                             lessQuantity: true,
@@ -129,12 +130,13 @@ export const buystock = async (req: Request, res: Response) => {
                 console.log('User not found in tradeQuantity collection:', id);
             }
         }
+        const customizedTime = usTime.toLocaleDateString('en-US', options);
         const insertdata = new userTrade(
             {
                 trade_id: resultAdminTradeEnter._id,
                 stockName: body.StockName,
                 loatSize: body.LoatSize,
-                tradeTime: indiaTime,
+                tradeTime: customizedTime,
                 trade: userTradeEnter,
             });
 
@@ -168,7 +170,6 @@ export const sellstock = async (req: Request, res: Response) => {
                             quantity -= sellData.quantity;
                             const order_id = sellData.buyOrderId;
                             const random5DigitNumber = generateRandomNumber();
-
                             const sellrequireddata: any = {
                                 access_key: sellData.access_key,
                                 id: id,
@@ -180,6 +181,9 @@ export const sellstock = async (req: Request, res: Response) => {
                             };
 
                             // sell(sellrequireddata);
+
+                            const profit = (Number(sellData.quantity) * Number(sellPrice) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
+                            console.log((sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize))
                             await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                                 {
@@ -187,7 +191,8 @@ export const sellstock = async (req: Request, res: Response) => {
                                         "trade.$.isSelled": true,
                                         "trade.$.sellAt": indiaTime,
                                         "trade.$.sellOrderId": random5DigitNumber,
-                                        "trade.$.sellPrice": sellPrice
+                                        "trade.$.sellKitePrice": sellPrice,
+                                        "trade.$.profit": profit
                                     },
                                 });
 

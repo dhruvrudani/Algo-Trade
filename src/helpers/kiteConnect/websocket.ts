@@ -5,7 +5,7 @@ const apiKey = config.get('api_key');
 const accessToken = 'YOUR_ACCESS_TOKEN';
 
 // List of instruments to subscribe to
-const instruments = ["NSE:INFY", "NSE:SENSEX", "NSE:NIFTY", "NSE:MIDCAP", "NSE:NIFTY50", "NSE:BANKNIFTY"];
+const instruments = ["NSE:INFY", "NSE:SENSEX", "NSE:MIDCAP", "NSE:NIFTY50", "NSE:BANKNIFTY"];
 
 // Connect to Kite Connect WebSocket API
 const ws = new WebSocket('wss://ws.kite.trade?api_key=' + apiKey + '&access_token=' + accessToken);

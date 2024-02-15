@@ -100,7 +100,7 @@ export const user_trade_get = async (req: Request, res: Response) => {
             const tradedata = await userTrade.find();
             tradedata.forEach(data => {
                 let e = data.trade
-                for(data of e){
+                for (data of e) {
 
                     if (String(data.user_id) === String(body.id) && data.isSelled === false) {
                         alltrade.push(e)
@@ -109,7 +109,7 @@ export const user_trade_get = async (req: Request, res: Response) => {
 
             });
         }
-        
+
         return res.status(200).json(new apiResponse(200, "all trades data", { alltrade }, {}));
 
     } catch (error) {
@@ -118,11 +118,50 @@ export const user_trade_get = async (req: Request, res: Response) => {
 
 }
 
-export const profit_loss = async (req:Request, res:Response )=>{
+export const profit_loss = async (req: Request, res: Response) => {
     let body = req.body;
-   try{
-        
-   }catch(error){
-     return res.status (500).json(new apiResponse(500,responseMessage.internalServerError,{},error));
-   }
+    const customizedTime = usTime.toLocaleDateString('en-US', options);
+
+    try {
+        //for single day
+        if (body.type === 0) { // admin
+            let money = 0;
+            const buyTradeData = await userTrade.find({ tradeTime: customizedTime});
+
+            if(buyTradeData){
+                buyTradeData.forEach((e)=>{
+                    e['trade'].forEach((data)=>{
+                        if(data.isSelled === true){
+                            money = money + data.profit;
+                        }
+                    })
+                })
+            }
+            return res.status(200).json(new apiResponse(200, "data of profit and loss is", money, {}));
+        }else if (body.type === 1){
+            let invested = 0;
+            let totalinvested = 0;
+            let money = 0;
+            const buyTradeData = await userTrade.find();
+
+            if(buyTradeData){
+                buyTradeData.forEach((e)=>{
+                    e['trade'].forEach((data)=>{
+                        if(data.isSelled === true){
+                            money = money + data.profit;
+                            invested = invested + (data.buyKitePrice * data.quantity) ;
+                        }
+                    })
+                    console.log(invested)
+                    totalinvested = invested * e.loatSize
+                })
+            }
+
+            console.log(totalinvested);
+            const calculation = (money / totalinvested) * 100;
+            return res.status(200).json(new apiResponse(200, "data of profit and loss is", {money , calculation}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
 }
