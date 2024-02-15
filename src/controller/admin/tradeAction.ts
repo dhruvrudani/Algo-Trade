@@ -73,7 +73,7 @@ export const buystock = async (req: Request, res: Response) => {
                         product: body.product
                     };
 
-                    buy(data);
+                    // buy(data);
 
                     userTradeEnter.push({
                         user_id: id,
@@ -81,6 +81,7 @@ export const buystock = async (req: Request, res: Response) => {
                         buyOrderId: random5DigitNumber,
                         quantity,
                         isSelled: false,
+                        buyKitePrice: 100,
                         buyAT: indiaTime,
                         accessToken: access_key,
                         lessQuantity: false,
@@ -102,7 +103,7 @@ export const buystock = async (req: Request, res: Response) => {
                             product: body.product
                         };
 
-                        buy(data);
+                        // buy(data);
                         userTradeEnter.push({
                             user_id: id,
                             tradingsymbol: body.tradingsymbol,
@@ -116,6 +117,7 @@ export const buystock = async (req: Request, res: Response) => {
                         });
                     } else {
                         userTradeEnter.push({
+                            // tradeDate: indiaTime,
                             trade_id: resultAdminTradeEnter._id,
                             msg: "Insufficient balance",
                             accessToken: access_key
@@ -130,7 +132,10 @@ export const buystock = async (req: Request, res: Response) => {
         const insertdata = new userTrade(
             {
                 trade_id: resultAdminTradeEnter._id,
-                trade: userTradeEnter
+                stockName: body.StockName,
+                loatSize: body.LoatSize,
+                tradeTime: indiaTime,
+                trade: userTradeEnter,
             });
 
         const resultUserTradeEnter = await insertdata.save();
@@ -162,7 +167,6 @@ export const sellstock = async (req: Request, res: Response) => {
                         if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === tradingsymbol) {
                             quantity -= sellData.quantity;
                             const order_id = sellData.buyOrderId;
-                            console.log(order_id)
                             const random5DigitNumber = generateRandomNumber();
 
                             const sellrequireddata: any = {
@@ -175,7 +179,7 @@ export const sellstock = async (req: Request, res: Response) => {
                                 product: body.product
                             };
 
-                            sell(sellrequireddata);
+                            // sell(sellrequireddata);
                             await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                                 {
@@ -186,6 +190,7 @@ export const sellstock = async (req: Request, res: Response) => {
                                         "trade.$.sellPrice": sellPrice
                                     },
                                 });
+
                             const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
                             for (const tradeData of data.trade) {
                                 if (String(tradeData.user_id) === String(id)) {

@@ -15,6 +15,7 @@ router.post('/login', tradeAction.login) //complete
 router.get('/user_quantity', tradeSummary.get_user_quantity)
 router.get('/get_trade', tradeSummary.trade_get)
 router.get('/user_get_trade', tradeSummary.user_trade_get)
+router.get('/profit_loss')
 
 
 export const adminRouter = router 
