@@ -117,3 +117,12 @@ export const user_trade_get = async (req: Request, res: Response) => {
     }
 
 }
+
+export const profit_loss = async (req:Request, res:Response )=>{
+    let body = req.body;
+   try{
+        
+   }catch(error){
+     return res.status (500).json(new apiResponse(500,responseMessage.internalServerError,{},error));
+   }
+}
