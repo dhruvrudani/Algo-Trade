@@ -16,6 +16,8 @@ router.get('/user_quantity', tradeSummary.get_user_quantity)
 router.get('/get_trade', tradeSummary.trade_get)
 router.get('/user_get_trade', tradeSummary.user_trade_get)
 router.get('/profit_loss',tradeSummary.profit_loss)
+router.get('/total_investment',tradeSummary.totalInverstment)
+router.get('/market_value',tradeSummary.marketValue)
 
 
 export const adminRouter = router 
