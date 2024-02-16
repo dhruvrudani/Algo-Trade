@@ -195,31 +195,12 @@ export const totalInverstment = async (req: Request, res: Response) => {
 export const marketValue = async (req: Request, res: Response) => {
     try {
         const tradedata = await userTrade.find();
-        let totalQty = 0;
-        let priceArray = [];
-        let tradeObj = {};
-        let tradeSymbol;
-        if (tradedata) {
-            tradedata.forEach((e) => {
-                totalQty = 0;
-                e['trade'].forEach((data) => {
-                    if (data.isSelled === false) {
-                        tradeSymbol = data.tradingsymbol;
-                        totalQty = totalQty + data.quantity;
-                    }
-                })
-                if(totalQty !== 0){
+        const priceArray = tradedata.map((e) => {
+            const filteredTrades = e['trade'].filter((data) => !data.isSelled);
+            const totalQty = filteredTrades.reduce((sum, trade) => sum + trade.quantity, 0);
+            return totalQty !== 0 ? { table: { tradeSymbol: filteredTrades[0].tradingsymbol, totalQty } } : null;
+        }).filter(Boolean);
 
-                    tradeObj = {
-                        table: {
-                            tradeSymbol: tradeSymbol,
-                            totalQty : totalQty
-                        }
-                    }
-                    priceArray.push(tradeObj)
-                }
-            })
-        }
         return res.status(200).json(new apiResponse(200, "data of total investment", { priceArray }, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
