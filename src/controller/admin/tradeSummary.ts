@@ -126,30 +126,30 @@ export const profit_loss = async (req: Request, res: Response) => {
         //for single day
         if (body.type === 0) { // admin
             let money = 0;
-            const buyTradeData = await userTrade.find({ tradeTime: customizedTime});
+            const buyTradeData = await userTrade.find({ tradeTime: customizedTime });
 
-            if(buyTradeData){
-                buyTradeData.forEach((e)=>{
-                    e['trade'].forEach((data)=>{
-                        if(data.isSelled === true){
+            if (buyTradeData) {
+                buyTradeData.forEach((e) => {
+                    e['trade'].forEach((data) => {
+                        if (data.isSelled === true) {
                             money = money + data.profit;
                         }
                     })
                 })
             }
             return res.status(200).json(new apiResponse(200, "data of profit and loss is", money, {}));
-        }else if (body.type === 1){
+        } else if (body.type === 1) {
             let invested = 0;
             let totalinvested = 0;
             let money = 0;
             const buyTradeData = await userTrade.find();
 
-            if(buyTradeData){
-                buyTradeData.forEach((e)=>{
-                    e['trade'].forEach((data)=>{
-                        if(data.isSelled === true){
+            if (buyTradeData) {
+                buyTradeData.forEach((e) => {
+                    e['trade'].forEach((data) => {
+                        if (data.isSelled === true) {
                             money = money + data.profit;
-                            invested = invested + (data.buyKitePrice * data.quantity) ;
+                            invested = invested + (data.buyKitePrice * data.quantity);
                         }
                     })
                     console.log(invested)
@@ -159,8 +159,68 @@ export const profit_loss = async (req: Request, res: Response) => {
 
             console.log(totalinvested);
             const calculation = (money / totalinvested) * 100;
-            return res.status(200).json(new apiResponse(200, "data of profit and loss is", {money , calculation}, {}));
+            return res.status(200).json(new apiResponse(200, "data of profit and loss is", { money, calculation }, {}));
         }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
+// API for calculate investment money
+
+export const totalInverstment = async (req: Request, res: Response) => {
+    try {
+        const tradedata = await userTrade.find();
+        let invested = 0;
+        let totalinvested = 0;
+
+        if (tradedata) {
+            tradedata.forEach((e) => {
+                e['trade'].forEach((data) => {
+                    if (data.isSelled === false) {
+                        invested = invested + (data.buyKitePrice * data.quantity);
+                    }
+                })
+                console.log(invested)
+                totalinvested = invested * e.loatSize
+            })
+        }
+        return res.status(200).json(new apiResponse(200, "data of total investment", { totalinvested }, {}));
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+// API market value
+
+export const marketValue = async (req: Request, res: Response) => {
+    try {
+        const tradedata = await userTrade.find();
+        let totalQty = 0;
+        let priceArray = [];
+        let tradeObj = {};
+        let tradeSymbol;
+        if (tradedata) {
+            tradedata.forEach((e) => {
+                totalQty = 0;
+                e['trade'].forEach((data) => {
+                    if (data.isSelled === false) {
+                        tradeSymbol = data.tradingsymbol;
+                        totalQty = totalQty + data.quantity;
+                    }
+                })
+                if(totalQty !== 0){
+
+                    tradeObj = {
+                        table: {
+                            tradeSymbol: tradeSymbol,
+                            totalQty : totalQty
+                        }
+                    }
+                    priceArray.push(tradeObj)
+                }
+            })
+        }
+        return res.status(200).json(new apiResponse(200, "data of total investment", { priceArray }, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
