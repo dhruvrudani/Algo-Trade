@@ -61,37 +61,9 @@ export const buystock = async (req: Request, res: Response) => {
                 const { quantity } = quantityObj;
                 const price = (quantity * body.price).toFixed(11);
                 const fund = Number(fundObj['equity'].net.toFixed(11));
-                if (access_key && Number(price) <= fund) {
-                    const random5DigitNumber = generateRandomNumber();
-                    const data: any = {
-                        access_key: userData.access_key,
-                        id: id,
-                        tradingsymbol: body.tradingsymbol,
-                        quantity: quantity,
-                        exchange: body.exchange,
-                        order_type: body.order_type,
-                        product: body.product
-                    };
+                if (access_key) {
 
-                    // buy(data);
-
-                    userTradeEnter.push({
-                        user_id: id,
-                        tradingsymbol: body.tradingsymbol,
-                        buyOrderId: random5DigitNumber,
-                        quantity,
-                        isSelled: false,
-                        buyKitePrice: 100,
-                        buyAT: indiaTime,
-                        accessToken: access_key,
-                        lessQuantity: false,
-                        buytradeStatus: null,
-                    });
-                } else {
-                    const updatedQuantity = stockQuantity(quantity, fund, Number(price));
-
-                    if (updatedQuantity > 0) {
-
+                    if (Number(price) <= fund) {
                         const random5DigitNumber = generateRandomNumber();
                         const data: any = {
                             access_key: userData.access_key,
@@ -104,30 +76,75 @@ export const buystock = async (req: Request, res: Response) => {
                         };
 
                         // buy(data);
+
                         userTradeEnter.push({
                             user_id: id,
                             tradingsymbol: body.tradingsymbol,
                             buyOrderId: random5DigitNumber,
-                            quantity: updatedQuantity,
+                            quantity,
                             isSelled: false,
                             buyKitePrice: 100,
                             buyAT: indiaTime,
                             accessToken: access_key,
-                            lessQuantity: true,
+                            lessQuantity: false,
                             buytradeStatus: null,
                         });
-                    } else {
-                        userTradeEnter.push({
-                            // tradeDate: indiaTime,
-                            trade_id: resultAdminTradeEnter._id,
-                            msg: "Insufficient balance",
-                            accessToken: access_key
-                        });
                     }
+                    else {
+                        const updatedQuantity = stockQuantity(quantity, fund, Number(price));
+
+                        if (updatedQuantity > 0) {
+
+                            const random5DigitNumber = generateRandomNumber();
+                            const data: any = {
+                                access_key: userData.access_key,
+                                id: id,
+                                tradingsymbol: body.tradingsymbol,
+                                quantity: quantity,
+                                exchange: body.exchange,
+                                order_type: body.order_type,
+                                product: body.product
+                            };
+
+                            // buy(data);
+                            userTradeEnter.push({
+                                user_id: id,
+                                tradingsymbol: body.tradingsymbol,
+                                buyOrderId: random5DigitNumber,
+                                quantity: updatedQuantity,
+                                isSelled: false,
+                                buyKitePrice: 100,
+                                buyAT: indiaTime,
+                                accessToken: access_key,
+                                lessQuantity: true,
+                                buytradeStatus: null,
+                            });
+                        } else {
+                            userTradeEnter.push({
+                                // tradeDate: indiaTime,
+                                user_id: id,
+                                trade_id: resultAdminTradeEnter._id,
+                                msg: "Insufficient balance",
+                                accessToken: access_key
+                            });
+                        }
+                    }
+                } else if (access_key === null) {
+                    userTradeEnter.push({
+                        // tradeDate: indiaTime,
+                        user_id: id,
+                        trade_id: resultAdminTradeEnter._id,
+                        msg: "user not login",
+                    });
                 }
             }
             else {
-                console.log('User not found in tradeQuantity collection:', id);
+                userTradeEnter.push({
+                    // tradeDate: indiaTime,
+                    trade_id: resultAdminTradeEnter._id,
+                    msg: "user does not set quantity of trade",
+                    accessToken: access_key
+                });
             }
         }
         const customizedTime = usTime.toLocaleDateString('en-US', options);
@@ -145,7 +162,6 @@ export const buystock = async (req: Request, res: Response) => {
         return res.status(200).json(new apiResponse(200, "buy stock details", { resultAdminTradeEnter, resultUserTradeEnter }, {}));
 
     } catch (error) {
-        console.log('✨',)
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
     }
 }

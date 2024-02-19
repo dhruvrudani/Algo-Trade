@@ -11,6 +11,8 @@ import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { builtinModules, findSourceMap } from "module";
+import { sendEmailHelper } from "../../helpers";
+import bodyParser from "body-parser";
 const jsondata = data;
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
@@ -202,6 +204,72 @@ export const marketValue = async (req: Request, res: Response) => {
         }).filter(Boolean);
 
         return res.status(200).json(new apiResponse(200, "data of total investment", { priceArray }, {}));
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
+//API of get kite login user details
+
+export const getKiteLoginUserDetails = async (req: Request, res: Response) => {
+    try {
+        const userdata = await userModel.find({ isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
+
+        if (userdata) {
+            return res.status(200).json(new apiResponse(200, "login user data", userdata, {}));
+        } else {
+            return res.status(200).json(new apiResponse(200, "Any user does not login", {}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
+//API of get kite not login user details
+
+export const getKiteNotLoginUserDetails = async (req: Request, res: Response) => {
+    try {
+        const userdata = await userModel.find({ isDelete: false, isActive: true, isVerified: true, isKiteLogin: false });
+
+        if (userdata && userdata.length !== 0) {
+            return res.status(200).json(new apiResponse(200, "unlinked user data", userdata, {}));
+        } else if (userdata.length === 0) {
+            return res.status(200).json(new apiResponse(200, "Any user Does not exist whose kite is unlinked", {}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
+//API of update kite login user details 
+
+export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
+    try {
+        const body = req.body;
+
+        const updateUserData = await userModel.findOneAndUpdate({ email: req.query.email }, { fullName: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
+
+        if (updateUserData !== null) {
+            return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
+        } else if (updateUserData === null) {
+            return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
+//API of block the user by the admin
+
+export const blockUserByAdmin = async (req: Request, res: Response) => {
+    try {
+        const body = req.body;
+        const userData = await userModel.find({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
+        
+        if (userData) {
+            const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true }, { isActive: false }, { new: true });
+            return res.status(200).json(new apiResponse(200,"user block successful", userData, {}));
+        }
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }

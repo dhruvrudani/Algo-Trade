@@ -1,11 +1,11 @@
 {
     "status": "success",
     "data": {
-        "user_id": "L2314",
+        "user_id": "A0101",
         "user_type": "individual",
-        "email": "kanu@gmail.com",
-        "user_name": "kanu lala",
-        "user_shortname": "KL",
+        "email": "abc@gmail.com",
+        "user_name": "abc patel",
+        "user_shortname": "AP",
         "broker": "ZERODHA",
         "exchanges": [
             "BFO",

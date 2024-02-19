@@ -9,6 +9,7 @@ import { encryptData } from "../../common/encryptDecrypt";
 import mongoose, { Collection } from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
+import { checkPreferences } from "joi";
 const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect
@@ -18,30 +19,31 @@ const kite = new KiteConnect({
 
 export const getUser = async (req: Request, res: Response) => {
     try {
-        const jsondata = kitelogin()
-        // const data = jsondata["data"];
-        // // console.log(data);
-        // const body = req.body;
-        // const userdata = await userModel.findOneAndUpdate({
-        //     _id: body.id,
-        //     isActive: true, isDelete: false, isVerified: true
-        // }, {
-        //     $set: {
-        //         access_key: "123",
-        //         z_user_id: data.user_id,
-        //         z_user_type: data.user_type,
-        //         z_email: data.email,
-        //         z_user_name: data.user_name,
-        //         z_user_shortname: data.user_shortname,
-        //         z_broker: data.broker,
-        //         z_exchanges: data.exchanges,
-        //         z_products: data.products,
-        //         z_order_types: data.order_types,
-        //         z_avatar_url: data.avatar_url,
-        //         z_meta: data.meta
-        //     }
-        // }, { new: true })
-        // return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
+        // const jsondata = kitelogin()
+        const data = jsondata["data"];
+        // console.log(data);
+        const body = req.body;
+        const userdata = await userModel.findOneAndUpdate({
+            _id: body.id,
+            isActive: true, isDelete: false, isVerified: true
+        }, {
+            $set: {
+                access_key: "123",
+                z_user_id: data.user_id,
+                z_user_type: data.user_type,
+                z_email: data.email,
+                z_user_name: data.user_name,
+                z_user_shortname: data.user_shortname,
+                z_broker: data.broker,
+                z_exchanges: data.exchanges,
+                z_products: data.products,
+                z_order_types: data.order_types,
+                z_avatar_url: data.avatar_url,
+                z_meta: data.meta,
+                isKiteLogin: true
+            }
+        }, { new: true })
+        return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
 
     } catch (error) {
         return res.status(500).send(error)
@@ -57,25 +59,26 @@ export const signUp = async (req: Request, res: Response) => {
             isActive: true,
             isDelete: false
         });
-        if (isAlready && isAlready.fullname === null) {
+        // if (isAlready && isAlready.fullname === null) {
 
-            let phoneNumber = body.phoneNumber
-            let OTPcode: any = Math.floor(100000 + Math.random() * 900000);
-            const encryptedCode = await encryptData(OTPcode)
-            var OTP = OTPcode
-            const bodyData = {
-                ...body,
-                otp: encryptedCode,
-                otpExpire: new Date()
-            };
+        //     let phoneNumber = body.phoneNumber
+        //     let OTPcode: any = Math.floor(100000 + Math.random() * 900000);
+        //     const encryptedCode = await encryptData(OTPcode)
+        //     var OTP = OTPcode
+        //     const bodyData = {
+        //         ...body,
+        //         otp: encryptedCode,
+        //         otpExpire: new Date()
+        //     };
 
-            const updateuser = await userModel.findOneAndUpdate({ phoneNumber: phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData })
-            bodyData.otpCode = OTPcode
-            return res.status(200).json(new apiResponse(200, responseMessage.otpSend, bodyData, {}));
+        //     console.log("e😀wllod");
+        //     const updateuser = await userModel.findOneAndUpdate({ phoneNumber: phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData }, { new: true })
+        //     bodyData.otpCode = OTPcode
+        //     return res.status(200).json(new apiResponse(200, responseMessage.otpSend, updateuser, {}));
 
-        }
+        // }
         //if user already exist or verification process is incomplete
-        else if (isAlready && isAlready.isVerified === false) {
+        if (isAlready && isAlready.isVerified === false) {
             let phoneNumber = body.phoneNumber
             let OTPcode: any = Math.floor(100000 + Math.random() * 900000);
             const encryptedCode = await encryptData(OTPcode)
@@ -126,11 +129,25 @@ export const signUp = async (req: Request, res: Response) => {
         }
 
         else if (isAlready && isAlready.isVerified === true && isAlready.email === null && isAlready.fullname === null) {
+            let OTPCode: any = Math.floor(100000 + Math.random() * 900000);
 
-            return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", isAlready._id], {}));
+            const encryptedCode = await encryptData(OTPCode)
+            const bodyData = {
+                ...body,
+                otp: encryptedCode,
+                otpExpire: new Date()
+            };
+
+            const updateuser = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData })
+            const userDetail = {
+                _id: updateuser._id,
+                phoneNumber: updateuser.phoneNumber,
+                otp: encryptedCode,
+                otpdcrypt: OTPCode
+            };
+            return res.status(200).json(new apiResponse(200, responseMessage.otpSend, userDetail, {}));
+            // return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", isAlready._id], {}));
         }
-
-
         //if user create account first time
         else if (!isAlready) {
             let phone = body.phoneNumber
@@ -161,7 +178,6 @@ export const signUp = async (req: Request, res: Response) => {
 
         }
     } catch (error) {
-        console.log(error);
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 };
@@ -187,10 +203,8 @@ export const OtpVerification = async (req: Request, res: Response) => {
 
 
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false })
-
             if (data) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-
                 if (difference <= 60000) {
                     if (data.otp === encodeotp) {
                         let updatedata = {
@@ -211,7 +225,12 @@ export const OtpVerification = async (req: Request, res: Response) => {
                 return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
             }
 
-        } else if (response.isVerified === true) {//login otp verification
+        } else if (response.isVerified === true && response.fullname === null && response.email === null) {
+            //render to registration form
+            return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", response._id], {}));
+        }
+
+        else if (response.isVerified === true) {//login otp verification
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false, isVerified: true })
             if (data) {
 
@@ -256,7 +275,6 @@ export const OtpVerification = async (req: Request, res: Response) => {
             }
         }
     } catch (error) {
-        console.log('error', error)
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error))
     }
 }
@@ -269,11 +287,13 @@ export const updateUser = async (req: Request, res: Response) => {
         const body = req.body;
 
         const data = await userModel.findOne({ _id: body.id, isActive: true, isVerified: true, isDelete: false });
-
-        if (data) {
+        const checkdata = await userModel.findOne({ _id: body.id, isActive: true, isVerified: true, isDelete: false, email: body.email });
+        console.log(checkdata);
+        if (data && checkdata === null) {
             const updateuser = await userModel.findByIdAndUpdate({ _id: body.id, isActive: true, isVerified: true, isDeleted: false }, { $set: body }, { new: true });
             return res.status(200).json(new apiResponse(200, responseMessage.signupSuccess, updateuser, {}))
-
+        } else if (checkdata) {
+            return res.status(200).json(new apiResponse(200, responseMessage.alreadyEmail, {}, {}))
         } else {
             return res.status(401).json(new apiResponse(401, responseMessage.invalidCraditional, {}, {}))
         }
