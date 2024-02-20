@@ -227,7 +227,29 @@ export const OtpVerification = async (req: Request, res: Response) => {
 
         } else if (response.isVerified === true && response.fullname === null && response.email === null) {
             //render to registration form
-            return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", response._id], {}));
+            let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false, isVerified: true })
+            if (data === null) {
+                return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+            }
+            else if (data.otp !== null) {
+                let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
+                if (difference <= 60000) {
+                    if (data.otp === encodeotp) {
+
+                        let updatedata = {
+                            otp: null
+                        }
+                        let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false, isVerified: true }, updatedata);
+
+                        return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", response._id], {}));
+
+                    } else {
+                        return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                    }
+                } else {
+                    return res.status(401).json(new apiResponse(401, responseMessage.expireOTP, {}, {}))
+                }
+            }
         }
 
         else if (response.isVerified === true) {//login otp verification
@@ -287,14 +309,10 @@ export const updateUser = async (req: Request, res: Response) => {
         const body = req.body;
 
         const data = await userModel.findOne({ _id: body.id, isActive: true, isVerified: true, isDelete: false });
-        const checkdata = await userModel.findOne({ _id: body.id, isActive: true, isVerified: true, isDelete: false, email: body.email });
-        console.log(checkdata);
-        if (data && checkdata === null) {
+        if (data ) {
             const updateuser = await userModel.findByIdAndUpdate({ _id: body.id, isActive: true, isVerified: true, isDeleted: false }, { $set: body }, { new: true });
             return res.status(200).json(new apiResponse(200, responseMessage.signupSuccess, updateuser, {}))
-        } else if (checkdata) {
-            return res.status(200).json(new apiResponse(200, responseMessage.alreadyEmail, {}, {}))
-        } else {
+        }else {
             return res.status(401).json(new apiResponse(401, responseMessage.invalidCraditional, {}, {}))
         }
 

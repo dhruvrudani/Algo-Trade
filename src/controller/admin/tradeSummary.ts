@@ -247,7 +247,7 @@ export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
 
-        const updateUserData = await userModel.findOneAndUpdate({ email: req.query.email }, { fullName: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
+        const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isKiteLogin: true }, { fullname: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
 
         if (updateUserData !== null) {
             return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
@@ -265,12 +265,68 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
         const userData = await userModel.find({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
-        
-        if (userData) {
-            const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true }, { isActive: false }, { new: true });
-            return res.status(200).json(new apiResponse(200,"user block successful", userData, {}));
+
+        if (body.key === 0) {//means block user
+            if (userData) {
+                const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true }, { isActive: false }, { new: true });
+                return res.status(200).json(new apiResponse(200, "user block successful", userData, {}));
+            }
+        } else if (body.key === 1) {
+            if (userData) {//means unblock user
+                const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: false, isVerified: true, isKiteLogin: true }, { isActive: true }, { new: true });
+                return res.status(200).json(new apiResponse(200, "user unblock successful", userData, {}));
+            }
         }
+
+
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 }
+
+//API of trade history
+
+ // Import mongoose for ObjectId type
+
+export const tradeHistory = async (req: Request, res: Response) => {
+    try {
+        const tradeData = await userTrade.find();
+        const alltrade = [];
+
+        for (const e of tradeData) {
+            const data = e['trade'];
+            const userId = data.user_id;  // Convert to ObjectId
+            if (data.buyKitePrice !== 0) {
+                const findUserData = await userModel.findById(userId);
+                if (findUserData) {
+                    alltrade.push({
+                        fullname: findUserData.fullname,
+                        email: findUserData.email,
+                        z_user_id: findUserData.z_user_id,
+                        date: data.tradeTime,
+                        profit: "-",
+                        strikePrice: data.buyKitePrice
+                    });
+                }
+            } else if (data.sellKitePrice !== null && data.sellKitePrice !== 0) {
+                const findUserData = await userModel.findById(userId);
+                if (findUserData) {
+                    alltrade.push({
+                        fullname: findUserData.fullname,
+                        email: findUserData.email,
+                        z_user_id: findUserData.z_user_id,
+                        date: data.tradeTime,
+                        profit: data.profit,
+                        strikePrice: data.sellKitePrice
+                    });
+                }
+            }
+        }
+
+        return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
+
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+

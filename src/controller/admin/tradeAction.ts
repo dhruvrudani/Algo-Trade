@@ -46,7 +46,7 @@ export const buystock = async (req: Request, res: Response) => {
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
-        const alluserdata = await userModel.find();
+        const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
         let userTradeEnter: any = [];
         for (const userData of alluserdata) {
 
@@ -78,7 +78,7 @@ export const buystock = async (req: Request, res: Response) => {
                         // buy(data);
 
                         userTradeEnter.push({
-                            user_id: id,
+                            user_id: userData._id,
                             tradingsymbol: body.tradingsymbol,
                             buyOrderId: random5DigitNumber,
                             quantity,
@@ -108,7 +108,7 @@ export const buystock = async (req: Request, res: Response) => {
 
                             // buy(data);
                             userTradeEnter.push({
-                                user_id: id,
+                                user_id: userData._id,
                                 tradingsymbol: body.tradingsymbol,
                                 buyOrderId: random5DigitNumber,
                                 quantity: updatedQuantity,
@@ -140,7 +140,8 @@ export const buystock = async (req: Request, res: Response) => {
             }
             else {
                 userTradeEnter.push({
-                    // tradeDate: indiaTime,
+                    // tradeDate: indiaTime,        
+                    user_id: id,
                     trade_id: resultAdminTradeEnter._id,
                     msg: "user does not set quantity of trade",
                     accessToken: access_key
@@ -175,7 +176,7 @@ export const sellstock = async (req: Request, res: Response) => {
         const random5DigitNumber = generateRandomNumber();
         const updateAdminTrade = await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellOrderId: random5DigitNumber, sellAT: indiaTime } });
         let sellUserData = [];
-        const alluserdata = await userModel.find();
+        const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
         for (const userdata of alluserdata) {
             if (buyTradeData && buyTradeData.trade_id === id) {
                 const id = userdata._id;
