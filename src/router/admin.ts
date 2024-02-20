@@ -49,4 +49,7 @@ router.patch('/updateKiteLoginUserData',tradeSummary.updateUserDetailsByAdmin)
 //block kite linked user
 router.post('/blockUser',tradeSummary.blockUserByAdmin)
 
+router.post('/tradeHistory',tradeSummary.tradeHistory)
+
+
 export const adminRouter = router 
