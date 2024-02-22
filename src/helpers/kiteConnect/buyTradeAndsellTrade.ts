@@ -127,3 +127,58 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
     }
 }
+
+export const sellTradeFunction = async (req: Request, res: Response, userdata, body) => {
+
+    try {
+        let obj;
+        const buyTradeData = await userTrade.findOne({ trade_id: body.id });
+        if (buyTradeData && buyTradeData.trade_id === body.id) {
+            const id = userdata._id;
+            let quantity = (await tradeQuantity.findOne({ user_id: id }))?.quantity || 0;
+            if (quantity > 0 && userdata.isKiteLogin === true) {
+                for (const sellData of buyTradeData.trade) {
+                    if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
+                        quantity -= sellData.quantity;
+                        const order_id = sellData.buyOrderId;
+                        const random5DigitNumber = generateRandomNumber();
+                        const sellrequireddata: any = {
+                            access_key: sellData.access_key,
+                            id: id,
+                            tradingsymbol: body.tradingsymbol,
+                            quantity: quantity,
+                            exchange: body.exchange,
+                            order_type: body.order_type,
+                            product: body.product
+                        };
+
+                        // sell(sellrequireddata);
+
+                        const profit = (Number(sellData.quantity) * Number(body.sellPrice) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
+                        console.log((sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize))
+                        await userTrade.updateOne(
+                            { "trade.user_id": id, "trade.buyOrderId": order_id },
+                            {
+                                $set: {
+                                    "trade.$.isSelled": true,
+                                    "trade.$.sellAt": indiaTime,
+                                    "trade.$.sellOrderId": random5DigitNumber,
+                                    "trade.$.sellKitePrice": body.sellPrice,
+                                    "trade.$.profit": profit
+                                },
+                            });
+
+                        const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
+                        for (const tradeData of data.trade) {
+                            if (String(tradeData.user_id) === String(id)) {
+                                return obj = tradeData
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
+    }
+}
