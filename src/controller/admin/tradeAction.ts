@@ -5,7 +5,7 @@ import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage, stockQuantity } from "../../helpers/index";
-import { buy, sell, getFundsAndMargins } from "../../helpers/kiteConnect/index";
+import { buy, sell, getFundsAndMargins, buyTradeFunction } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -32,6 +32,7 @@ function generateRandomNumber() {
 export const buystock = async (req: Request, res: Response) => {
     try {
         const random5DigitNumber = generateRandomNumber();
+        let userTradeEnter: any = [];
         const body = req.body
         const adminTradeEnter: any = new adminTrade({
             tradingsymbol: body.tradingsymbol,
@@ -43,111 +44,18 @@ export const buystock = async (req: Request, res: Response) => {
             buyAT: indiaTime
         })
 
-
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
         const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
-        let userTradeEnter: any = [];
-        for (const userData of alluserdata) {
 
-            //get user trade and margin
-            // getFundsAndMargins(userData.access_key);
+        const promises = alluserdata.map(async userData => {
+            const quantityObj = await tradeQuantity.findOne({ user_id: userData.id });
+            return buyTradeFunction(req, res, userData, body, resultAdminTradeEnter, quantityObj);
+        });
 
-            const fundObj = funddata["data"];
+        const userTradeResults = await Promise.all(promises);
+        userTradeEnter = userTradeResults.filter(result => result !== undefined);
 
-            const { _id: id, access_key, isKiteLogin } = userData;
-            const quantityObj = await tradeQuantity.findOne({ user_id: id });
-            if (quantityObj) {
-                const { quantity } = quantityObj;
-                const price = (quantity * body.price).toFixed(11);
-                const fund = Number(fundObj['equity'].net.toFixed(11));
-                if (access_key) {
-
-                    if (Number(price) <= fund) {
-                        const random5DigitNumber = generateRandomNumber();
-                        const data: any = {
-                            access_key: userData.access_key,
-                            id: id,
-                            tradingsymbol: body.tradingsymbol,
-                            quantity: quantity,
-                            exchange: body.exchange,
-                            order_type: body.order_type,
-                            product: body.product
-                        };
-
-                        // buy(data);
-
-                        userTradeEnter.push({
-                            user_id: userData._id,
-                            tradingsymbol: body.tradingsymbol,
-                            buyOrderId: random5DigitNumber,
-                            quantity,
-                            isSelled: false,
-                            buyKitePrice: 100,
-                            buyAT: indiaTime,
-                            accessToken: access_key,
-                            lessQuantity: false,
-                            buytradeStatus: null,
-                        });
-                    }
-                    else {
-                        const updatedQuantity = stockQuantity(quantity, fund, Number(price));
-
-                        if (updatedQuantity > 0) {
-
-                            const random5DigitNumber = generateRandomNumber();
-                            const data: any = {
-                                access_key: userData.access_key,
-                                id: id,
-                                tradingsymbol: body.tradingsymbol,
-                                quantity: quantity,
-                                exchange: body.exchange,
-                                order_type: body.order_type,
-                                product: body.product
-                            };
-
-                            // buy(data);
-                            userTradeEnter.push({
-                                user_id: userData._id,
-                                tradingsymbol: body.tradingsymbol,
-                                buyOrderId: random5DigitNumber,
-                                quantity: updatedQuantity,
-                                isSelled: false,
-                                buyKitePrice: 100,
-                                buyAT: indiaTime,
-                                accessToken: access_key,
-                                lessQuantity: true,
-                                buytradeStatus: null,
-                            });
-                        } else {
-                            userTradeEnter.push({
-                                // tradeDate: indiaTime,
-                                user_id: id,
-                                trade_id: resultAdminTradeEnter._id,
-                                msg: "Insufficient balance",
-                                accessToken: access_key
-                            });
-                        }
-                    }
-                } else if (access_key === null) {
-                    userTradeEnter.push({
-                        // tradeDate: indiaTime,
-                        user_id: id,
-                        trade_id: resultAdminTradeEnter._id,
-                        msg: "user not login",
-                    });
-                }
-            }
-            else {
-                userTradeEnter.push({
-                    // tradeDate: indiaTime,        
-                    user_id: id,
-                    trade_id: resultAdminTradeEnter._id,
-                    msg: "user does not set quantity of trade",
-                    accessToken: access_key
-                });
-            }
-        }
         const customizedTime = usTime.toLocaleDateString('en-US', options);
         const insertdata = new userTrade(
             {
@@ -161,11 +69,11 @@ export const buystock = async (req: Request, res: Response) => {
         const resultUserTradeEnter = await insertdata.save();
 
         return res.status(200).json(new apiResponse(200, "buy stock details", { resultAdminTradeEnter, resultUserTradeEnter }, {}));
-
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error.message));
     }
 }
+
 
 
 export const sellstock = async (req: Request, res: Response) => {
