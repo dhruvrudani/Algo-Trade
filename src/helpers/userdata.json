@@ -1,11 +1,11 @@
 {
     "status": "success",
     "data": {
-        "user_id": "X0101",
+        "user_id": "K0101",
         "user_type": "individual",
-        "email": "xyz@gmail.com",
-        "user_name": "xyz patel",
-        "user_shortname": "XP",
+        "email": "krish@gmail.com",
+        "user_name": "krish patel",
+        "user_shortname": "KP",
         "broker": "ZERODHA",
         "exchanges": [
             "BFO",

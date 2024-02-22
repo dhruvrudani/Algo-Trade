@@ -140,29 +140,30 @@ export const profit_loss = async (req: Request, res: Response) => {
                 })
             }
             return res.status(200).json(new apiResponse(200, "data of profit and loss is", money, {}));
-        } else if (body.type === 1) {
-            let invested = 0;
-            let totalinvested = 0;
-            let money = 0;
-            const buyTradeData = await userTrade.find();
-
-            if (buyTradeData) {
-                buyTradeData.forEach((e) => {
-                    e['trade'].forEach((data) => {
-                        if (data.isSelled === true) {
-                            money = money + data.profit;
-                            invested = invested + (data.buyKitePrice * data.quantity);
-                        }
-                    })
-                    console.log(invested)
-                    totalinvested = invested * e.loatSize
-                })
-            }
-
-            console.log(totalinvested);
-            const calculation = (money / totalinvested) * 100;
-            return res.status(200).json(new apiResponse(200, "data of profit and loss is", { money, calculation }, {}));
         }
+        // else if (body.type === 1) {
+        //     let invested = 0;
+        //     let totalinvested = 0;
+        //     let money = 0;
+        //     const buyTradeData = await userTrade.find();
+
+        //     if (buyTradeData) {
+        //         buyTradeData.forEach((e) => {
+        //             e['trade'].forEach((data) => {
+        //                 if (data.isSelled === true) {
+        //                     money = money + data.profit;
+        //                     invested = invested + (data.buyKitePrice * data.quantity);
+        //                 }
+        //             })
+        //             console.log(invested)
+        //             totalinvested = invested * e.loatSize
+        //         })
+        //     }
+
+        //     console.log(totalinvested);
+        //     const calculation = (money / totalinvested) * 100;
+        //     return res.status(200).json(new apiResponse(200, "data of profit and loss is", { money, calculation }, {}));
+        // }
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
@@ -286,47 +287,143 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 
 //API of trade history
 
- // Import mongoose for ObjectId type
+// Import mongoose for ObjectId type
 
 export const tradeHistory = async (req: Request, res: Response) => {
+    const body = req.body;
     try {
-        const tradeData = await userTrade.find();
         const alltrade = [];
+        const uniqueUsersMap = new Map();
+
+        var tradeData;
+
+        if (body.tradeTime === null) {
+            tradeData = await userTrade.find();
+        } else if (body.tradeTime !== null) {
+            tradeData = await userTrade.find({ tradeTime: body.tradeTime });
+        }
 
         for (const e of tradeData) {
-            const data = e['trade'];
-            const userId = data.user_id;  // Convert to ObjectId
-            if (data.buyKitePrice !== 0) {
-                const findUserData = await userModel.findById(userId);
-                if (findUserData) {
-                    alltrade.push({
-                        fullname: findUserData.fullname,
-                        email: findUserData.email,
-                        z_user_id: findUserData.z_user_id,
-                        date: data.tradeTime,
-                        profit: "-",
-                        strikePrice: data.buyKitePrice
-                    });
-                }
-            } else if (data.sellKitePrice !== null && data.sellKitePrice !== 0) {
-                const findUserData = await userModel.findById(userId);
-                if (findUserData) {
-                    alltrade.push({
-                        fullname: findUserData.fullname,
-                        email: findUserData.email,
-                        z_user_id: findUserData.z_user_id,
-                        date: data.tradeTime,
-                        profit: data.profit,
-                        strikePrice: data.sellKitePrice
+            const userdata = e['trade'];
+
+            for (const data of userdata) {
+                const id = data.user_id;
+
+                const userTradeKey = id + "_" + e.tradeTime;
+
+                if (!uniqueUsersMap.has(userTradeKey)) {
+                    const findUserData: any = await userModel.findById({ _id: id });
+
+                    if (findUserData) {
+                        const tradeInfo = {
+                            fullname: findUserData.fullname,
+                            email: findUserData.email,
+                            phoneNumber: findUserData.phoneNumber,
+                            z_user_id: findUserData.z_user_id,
+                            date: e.tradeTime,
+                            profit: data.profit
+                        };
+
+                        alltrade.push(tradeInfo);
+                        uniqueUsersMap.set(userTradeKey, data.profit);
+                    }
+                } else {
+                    const cal = uniqueUsersMap.get(userTradeKey);
+                    console.log(data.profit);
+                    alltrade.forEach(element => {
+                        if (element.date == data.tradeTime && element.email == data.email) {
+                            element.profit += data.profit;
+                        }
                     });
                 }
             }
         }
-
+        console.log(uniqueUsersMap);
         return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
-
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 }
+
+// Helper function to calculate profit for a given trade entry
+
+
+
+
+
+
+
+
+
+// export const tradeHistory = async (req: Request, res: Response) => {
+//     const body = req.body;
+//     try {
+//         const alltrade = [];
+//         var tradeData;
+
+//         if (body.tradeTime === null) {
+//             tradeData = await userTrade.find();
+//         } else if (body.tradeTime !== null) {
+//             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
+//         }
+
+//         let invested = 0;
+//         let totalinvested = 0;
+//         let money = 0;
+
+
+//         tradeData.forEach((e) => {
+//             e['trade'].forEach((data) => {
+//                 if (data.isSelled === true) {
+//                     money = money + data.profit;
+//                     invested = invested + (data.buyKitePrice * data.quantity);
+//                 }
+//             })
+//             console.log(invested)
+//             totalinvested = invested * e.loatSize
+//         })
+
+//         console.log(totalinvested);
+//         var calculation = (money / totalinvested) * 100;
+
+
+//         for (const e of tradeData) {
+//             const userdata = e['trade'];
+
+//             for (const data of userdata) {
+
+//                 const id = data.user_id;
+//                 if (data.buyKitePrice !== 0) {
+//                     const findUserData: any = await userModel.findById({ _id: id });
+//                     if (findUserData) {
+//                         alltrade.push({
+//                             fullname: findUserData.fullname,
+//                             email: findUserData.email,
+//                             phoneNumber: findUserData.phoneNumber,
+//                             z_user_id: findUserData.z_user_id,
+//                             date: e.tradeTime,
+//                             profit: "-"
+//                         });
+//                     }
+//                 }
+//                 if (data.sellKitePrice !== null && data.sellKitePrice !== 0) {
+//                     const findUserData = await userModel.findById({ _id: id });
+//                     if (findUserData) {
+//                         alltrade.push({
+//                             fullname: findUserData.fullname,
+//                             email: findUserData.email,
+//                             phoneNumber: findUserData.phoneNumber,
+//                             z_user_id: findUserData.z_user_id,
+//                             date: e.tradeTime,
+//                             profit: calculation
+//                         });
+//                     }
+//                 }
+//             }
+//         }
+//         return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
+//     } catch (error) {
+//         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+//     }
+// }
 
