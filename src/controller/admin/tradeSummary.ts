@@ -292,58 +292,56 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
     try {
-        const alltrade = [];
-        const uniqueUsersMap = new Map();
-
+        var alltrade = {};
         var tradeData;
-
         if (body.tradeTime === null) {
             tradeData = await userTrade.find();
         } else if (body.tradeTime !== null) {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
         }
-
-        for (const e of tradeData) {
-            const userdata = e['trade'];
-
-            for (const data of userdata) {
-                const id = data.user_id;
-
-                const userTradeKey = id + "_" + e.tradeTime;
-
-                if (!uniqueUsersMap.has(userTradeKey)) {
-                    const findUserData: any = await userModel.findById({ _id: id });
-
-                    if (findUserData) {
-                        const tradeInfo = {
-                            fullname: findUserData.fullname,
-                            email: findUserData.email,
-                            phoneNumber: findUserData.phoneNumber,
-                            z_user_id: findUserData.z_user_id,
-                            date: e.tradeTime,
-                            profit: data.profit
-                        };
-
-                        alltrade.push(tradeInfo);
-                        uniqueUsersMap.set(userTradeKey, data.profit);
-                    }
-                } else {
-                    const cal = uniqueUsersMap.get(userTradeKey);
-                    console.log(data.profit);
-                    alltrade.forEach(element => {
-                        if (element.date == data.tradeTime && element.email == data.email) {
-                            element.profit += data.profit;
+        const historyData = {};
+        if (tradeData) {
+            for (let i = 0; i < tradeData.length; i++) {
+                const e = tradeData[i];
+                for (let j = 0; j < e['trade'].length; j++) {
+                    const data = e['trade'][j];
+                    console.log(i, ":", data);
+                    if (data.isSelled === true) {
+                        const key = `${e.tradeTime}_${data.user_id}`;
+                        const userData = await userModel.findById(data.user_id);
+                        if (Object.keys(alltrade).length !== 0 && alltrade[key]) {
+                            alltrade[key] += data.profit;
+                            historyData[data.user_id] = {
+                                fullname: userData.fullname,
+                                email: userData.email,
+                                phoneNumber: userData.phoneNumber,
+                                z_user_id: userData.z_user_id,
+                                date: e.tradeTime,
+                                profit: (historyData[data.user_id]?.profit || 0) + data.profit,
+                            };
+                        } else {
+                            alltrade[key] = data.profit;
+                            historyData[data.user_id] = {
+                                fullname: userData.fullname,
+                                email: userData.email,
+                                phoneNumber: userData.phoneNumber,
+                                z_user_id: userData.z_user_id,
+                                date: e.tradeTime,
+                                profit: data.profit,
+                            };
                         }
-                    });
+                    }
                 }
             }
         }
-        console.log(uniqueUsersMap);
-        return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
+
+        return res.status(200).json(new apiResponse(200, "trade history", { historyData }, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
-}
+};
+
+
 
 // Helper function to calculate profit for a given trade entry
 
