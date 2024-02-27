@@ -249,23 +249,29 @@ export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
         const userData = await userModel.findById({ _id: body.id });
-        var updateUserData;
+        let updateUserData;
         if (userData.role === 0) { //admin
 
-            if (body.usingPassword === false) {
 
+            if (body.usingPassword === false) {
                 updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, usingPassword: false }, { new: true });
             } else if (body.usingPassword === true) {
+
                 if (body.password) {
 
                     const bcryptdPassword = await bcrypt.hash(body.password, 10);
+                    if (body.kiteid) {
 
-                    updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, password: bcryptdPassword, usingPassword: true }, { new: true });
+                        updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, password: bcryptdPassword, usingPassword: true }, { new: true });
+                    } else {
+                        updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, password: bcryptdPassword, usingPassword: true }, { new: true });
+
+                    }
                 } else {
                     return res.status(401).json(new apiResponse(401, "please set the password", updateUserData, {}));
                 }
             }
-            if (updateUserData !== null) {
+            if (updateUserData !== null && updateUserData.length !== 0) {
                 return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
             } else if (updateUserData === null) {
                 return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
@@ -313,13 +319,11 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 
 //API of trade history
 
-// Import mongoose for ObjectId type
-
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
     try {
-        var alltrade = {};
-        var tradeData;
+        let alltrade = {};
+        let tradeData;
         if (body.tradeTime === null) {
             tradeData = await userTrade.find();
         } else if (body.tradeTime !== null) {
@@ -367,87 +371,65 @@ export const tradeHistory = async (req: Request, res: Response) => {
     }
 };
 
+//sub category history API
+
+export const subtradeHistory = async (req: Request, res: Response) => {
+    const body = req.body;
+    try {
+        const alltrade = [];
+        let tradeData;
+
+        if (body.tradeTime === null) {
+            tradeData = await userTrade.find();
+        } else if (body.tradeTime !== null) {
+            tradeData = await userTrade.find({ tradeTime: body.tradeTime });
+        }
+        
+
+        for (const e of tradeData) {
+            const userdata = e['trade'];
+
+            for (const data of userdata) {
+
+                if (data.user_id == body.id) {
+                    const id = data.user_id;
+                    if (data.buyKitePrice !== 0 && data.isSelled === false) {
+                        const findUserData: any = await userModel.findById({ _id: id });
+                        if (findUserData) {
+                            alltrade.push({
+                                date: e.tradeTime,
+                                StockName: data.tradingsymbol,
+                                BuyPrice: data.buyKitePrice,
+                                SellPrice: "-",
+                                BuyStatus: data.buytradeStatus,
+                                SellStatus: "-",
+                                profit: "-"
+
+                            });
+                        }
+                    }
+                    else if (data.isSelled === true) {
+                        const findUserData = await userModel.findById({ _id: id });
+                        if (findUserData) {
+                            alltrade.push({
+                                date: e.tradeTime,
+                                StockName: data.tradingsymbol,
+                                BuyPrice: data.buyKitePrice,
+                                SellPrice: data.sellKitePrice,
+                                BuyStatus: data.buytradeStatus,
+                                SellStatus: data.selltradeStatus,
+                                profit: data.profit
+                            });
+                        }
+                    }
+                }
 
 
-// Helper function to calculate profit for a given trade entry
-
-
-
-
-
-
-
-
-
-// export const tradeHistory = async (req: Request, res: Response) => {
-//     const body = req.body;
-//     try {
-//         const alltrade = [];
-//         var tradeData;
-
-//         if (body.tradeTime === null) {
-//             tradeData = await userTrade.find();
-//         } else if (body.tradeTime !== null) {
-//             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
-//         }
-
-//         let invested = 0;
-//         let totalinvested = 0;
-//         let money = 0;
-
-
-//         tradeData.forEach((e) => {
-//             e['trade'].forEach((data) => {
-//                 if (data.isSelled === true) {
-//                     money = money + data.profit;
-//                     invested = invested + (data.buyKitePrice * data.quantity);
-//                 }
-//             })
-//             console.log(invested)
-//             totalinvested = invested * e.loatSize
-//         })
-
-//         console.log(totalinvested);
-//         var calculation = (money / totalinvested) * 100;
-
-
-//         for (const e of tradeData) {
-//             const userdata = e['trade'];
-
-//             for (const data of userdata) {
-
-//                 const id = data.user_id;
-//                 if (data.buyKitePrice !== 0) {
-//                     const findUserData: any = await userModel.findById({ _id: id });
-//                     if (findUserData) {
-//                         alltrade.push({
-//                             fullname: findUserData.fullname,
-//                             email: findUserData.email,
-//                             phoneNumber: findUserData.phoneNumber,
-//                             z_user_id: findUserData.z_user_id,
-//                             date: e.tradeTime,
-//                             profit: "-"
-//                         });
-//                     }
-//                 }
-//                 if (data.sellKitePrice !== null && data.sellKitePrice !== 0) {
-//                     const findUserData = await userModel.findById({ _id: id });
-//                     if (findUserData) {
-//                         alltrade.push({
-//                             fullname: findUserData.fullname,
-//                             email: findUserData.email,
-//                             phoneNumber: findUserData.phoneNumber,
-//                             z_user_id: findUserData.z_user_id,
-//                             date: e.tradeTime,
-//                             profit: calculation
-//                         });
-//                     }
-//                 }
-//             }
-//         }
-//         return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
-//     } catch (error) {
-//         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
-//     }
-// }
+            }
+        }
+        return res.status(200).json(new apiResponse(200, "trade history", { alltrade }, {}));
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
 
