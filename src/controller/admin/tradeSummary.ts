@@ -13,6 +13,7 @@ import jwt from "jsonwebtoken";
 import { builtinModules, findSourceMap } from "module";
 import { sendEmailHelper } from "../../helpers";
 import bodyParser from "body-parser";
+import bcrypt from "bcryptjs";
 const jsondata = data;
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
@@ -242,18 +243,43 @@ export const getKiteNotLoginUserDetails = async (req: Request, res: Response) =>
     }
 }
 
-//API of update kite login user details 
+//API of update kite login user details and also include admin profile update
 
 export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
+        const userData = await userModel.findById({ _id: body.id });
+        var updateUserData;
+        if (userData.role === 0) { //admin
 
-        const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isKiteLogin: true }, { fullname: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
+            if (body.usingPassword === false) {
 
-        if (updateUserData !== null) {
-            return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
-        } else if (updateUserData === null) {
-            return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
+                updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, usingPassword: false }, { new: true });
+            } else if (body.usingPassword === true) {
+                if (body.password) {
+
+                    const bcryptdPassword = await bcrypt.hash(body.password, 10);
+
+                    updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, password: bcryptdPassword, usingPassword: true }, { new: true });
+                } else {
+                    return res.status(401).json(new apiResponse(401, "please set the password", updateUserData, {}));
+                }
+            }
+            if (updateUserData !== null) {
+                return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
+            } else if (updateUserData === null) {
+                return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
+            }
+
+        } else if (userData.role === 1) {
+
+            updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isKiteLogin: true }, { fullname: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
+
+            if (updateUserData !== null) {
+                return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
+            } else if (updateUserData === null) {
+                return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
+            }
         }
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));

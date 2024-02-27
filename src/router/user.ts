@@ -1,6 +1,6 @@
 import express from 'express'
 import { userValidation } from '../validation'
-import { tradeAction, userController } from '../controller'
+import { tradeAction, userController, planDetails } from '../controller'
 import { userJWT } from '../helpers/jwt'
 const router = express.Router()
 
@@ -18,6 +18,7 @@ router.post('/otpverification', userValidation.verificationOtp, userController.O
 //update user details
 router.patch('/updateuser', userValidation.updateuser, userController.updateUser) //complete
 
+router.post('/buyPlan', planDetails.BuyPlan) //complete
 
 router.use(userJWT)
 
@@ -26,5 +27,8 @@ router.use(userJWT)
 //delete user
 router.delete('/delete', userValidation.deletes, userController.deleteuser) //complete
 
+//buy plan
+
 router.post('/getzeroghadata', userController.getUser) //complete
+
 export const userRouter = router
