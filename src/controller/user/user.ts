@@ -128,7 +128,7 @@ export const signUp = async (req: Request, res: Response) => {
                 } else {
                     return res.status(200).json(new apiResponse(401, "you does not set password at the time of profile updation", {}, {}));
                 }
-            } else if (isAlready.usingPassword === false || isAlready.role === 1) {
+            } else if (isAlready.usingPassword === false || isAlready.role === 1 || isAlready.usingPassword === null) {
 
                 let OTPCode: any = Math.floor(100000 + Math.random() * 900000);
 

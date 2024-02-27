@@ -28,10 +28,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
         //get user trade and margin
         // getFundsAndMargins(userData.access_key);
 
-        let returnObj;  
+        let returnObj;
         const fundObj = funddata["data"];
-        const updatePlan = Number(userData.totalUsePlan) + 1;
-        console.log(updatePlan);
         const { _id: id, access_key, isKiteLogin } = userData;
         if (quantityObj) {
             const { quantity } = quantityObj;
@@ -66,7 +64,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                         },
                         { new: true }
                     );
-                        console.log(alluserdata);
+                    console.log(alluserdata);
                     return returnObj = {
                         user_id: userData._id,
                         tradingsymbol: body.tradingsymbol,
@@ -111,7 +109,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                             },
                             { new: true }
                         );
-                            console.log(alluserdata);
+                        console.log(alluserdata);
                         return returnObj = {
                             user_id: userData._id,
                             tradingsymbol: body.tradingsymbol,
@@ -122,7 +120,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                             buyAT: indiaTime,
                             accessToken: access_key,
                             lessQuantity: true,
-                            buytradeStatus: null,
+                            buytradeStatus: null
                         };
                     } else {
                         return returnObj = {
@@ -194,7 +192,9 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                                     "trade.$.sellAt": indiaTime,
                                     "trade.$.sellOrderId": random5DigitNumber,
                                     "trade.$.sellKitePrice": body.sellPrice,
-                                    "trade.$.profit": profit
+                                    "trade.$.profit": profit,
+                                    "trade.$.selltradeStatus": null
+
                                 },
                             });
 
