@@ -28,9 +28,10 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
         //get user trade and margin
         // getFundsAndMargins(userData.access_key);
 
-        let returnObj;
+        let returnObj;  
         const fundObj = funddata["data"];
-
+        const updatePlan = Number(userData.totalUsePlan) + 1;
+        console.log(updatePlan);
         const { _id: id, access_key, isKiteLogin } = userData;
         if (quantityObj) {
             const { quantity } = quantityObj;
@@ -51,7 +52,21 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                     };
 
                     // buy(data);
-
+                    const alluserdata = await userModel.findOneAndUpdate(
+                        {
+                            _id: userData._id,
+                            isActive: true,
+                            isDelete: false,
+                            isVerified: true
+                        },
+                        {
+                            $inc: {
+                                totalUsePlan: +1
+                            }
+                        },
+                        { new: true }
+                    );
+                        console.log(alluserdata);
                     return returnObj = {
                         user_id: userData._id,
                         tradingsymbol: body.tradingsymbol,
@@ -82,6 +97,21 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                         };
 
                         // buy(data);
+                        const alluserdata = await userModel.findOneAndUpdate(
+                            {
+                                _id: userData._id,
+                                isActive: true,
+                                isDelete: false,
+                                isVerified: true
+                            },
+                            {
+                                $inc: {
+                                    totalUsePlan: +1
+                                }
+                            },
+                            { new: true }
+                        );
+                            console.log(alluserdata);
                         return returnObj = {
                             user_id: userData._id,
                             tradingsymbol: body.tradingsymbol,

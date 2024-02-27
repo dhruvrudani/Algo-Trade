@@ -10,6 +10,7 @@ import mongoose, { Collection } from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { checkPreferences } from "joi";
+import bcrypt from "bcryptjs";
 const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect
@@ -59,24 +60,7 @@ export const signUp = async (req: Request, res: Response) => {
             isActive: true,
             isDelete: false
         });
-        // if (isAlready && isAlready.fullname === null) {
 
-        //     let phoneNumber = body.phoneNumber
-        //     let OTPcode: any = Math.floor(100000 + Math.random() * 900000);
-        //     const encryptedCode = await encryptData(OTPcode)
-        //     var OTP = OTPcode
-        //     const bodyData = {
-        //         ...body,
-        //         otp: encryptedCode,
-        //         otpExpire: new Date()
-        //     };
-
-        //     console.log("e😀wllod");
-        //     const updateuser = await userModel.findOneAndUpdate({ phoneNumber: phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData }, { new: true })
-        //     bodyData.otpCode = OTPcode
-        //     return res.status(200).json(new apiResponse(200, responseMessage.otpSend, updateuser, {}));
-
-        // }
         //if user already exist or verification process is incomplete
         if (isAlready && isAlready.isVerified === false) {
             let phoneNumber = body.phoneNumber
@@ -106,26 +90,66 @@ export const signUp = async (req: Request, res: Response) => {
         }
 
         //if user exist and it was verified so login it
+
         else if (isAlready && isAlready.isVerified === true && isAlready.email !== null && isAlready.fullname !== null) {
 
-            let OTPCode: any = Math.floor(100000 + Math.random() * 900000);
+            if (isAlready.usingPassword === true && isAlready.role === 0) {
+                if (isAlready.password !== null) {
 
-            const encryptedCode = await encryptData(OTPCode)
-            const bodyData = {
-                ...body,
-                otp: encryptedCode,
-                otpExpire: new Date()
-            };
+                    if (body.password) {
+                        const checkPassword = await bcrypt.compare(body.password, isAlready.password);
+                        if (checkPassword === true && isAlready.role === 0)//mean that admin
+                        {
+                            const payload = {
+                                _id: isAlready._id,
+                                status: "Login",
+                                generatedOn: new Date().getTime()
+                            }
 
-            const updateuser = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData })
-            const userDetail = {
-                _id: updateuser._id,
-                phoneNumber: updateuser.phoneNumber,
-                otp: encryptedCode,
-                otpdcrypt: OTPCode
-            };
+                            const token = await jwt.sign(payload, config.get('jwt_token_secret'));
+                            const refresh_token = await jwt.sign({
+                                _id: isAlready._id,
+                                generateOn: new Date().getTime()
 
-            return res.status(200).json(new apiResponse(200, responseMessage.otpSend, userDetail, {}));
+                            }, config.get('jwt_token_secret'));
+
+                            let responsedata = await userModel.findOne({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false, isVerified: true }).select("_id phoneNumber isVerified isActive isDelete createdAt updatedAt");
+
+                            let responseresult = { data: responsedata, token, refresh_token }
+
+                            return res.status(200).json(new apiResponse(200, responseMessage.loginSuccess, responseresult, {}));
+                        } else if (checkPassword === false) {
+                            return res.status(200).json(new apiResponse(401, responseMessage.invalidUserPasswordEmail, {}, {}));
+                        }
+
+                    } else {
+                        return res.status(200).json(new apiResponse(401, "password required", {}, {}));
+                    }
+                } else {
+                    return res.status(200).json(new apiResponse(401, "you does not set password at the time of profile updation", {}, {}));
+                }
+            } else if (isAlready.usingPassword === false || isAlready.role === 1) {
+
+                let OTPCode: any = Math.floor(100000 + Math.random() * 900000);
+
+                const encryptedCode = await encryptData(OTPCode)
+                const bodyData = {
+                    ...body,
+                    otp: encryptedCode,
+                    otpExpire: new Date()
+                };
+                const updateuser = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isVerified: true, isDelete: false, isActive: true }, { $set: bodyData })
+                const userDetail = {
+                    _id: updateuser._id,
+                    phoneNumber: updateuser.phoneNumber,
+                    otp: encryptedCode,
+                    otpdcrypt: OTPCode
+                };
+
+                return res.status(200).json(new apiResponse(200, responseMessage.otpSend, userDetail, {}));
+            }
+
+
         }
 
         else if (isAlready && isAlready.isVerified === true && isAlready.email === null && isAlready.fullname === null) {
@@ -151,6 +175,7 @@ export const signUp = async (req: Request, res: Response) => {
         //if user create account first time
         else if (!isAlready) {
             let phone = body.phoneNumber
+            let role = body.role
             // let ownerEmail = body.ownerEmail
 
             // const newuser = new userModel({
@@ -161,6 +186,7 @@ export const signUp = async (req: Request, res: Response) => {
             const encryptedCode = await encryptData(OTPCode)
             const bodyData = {
                 phoneNumber: phone,
+                role: role,
                 otp: encryptedCode,
                 otpExpire: new Date()
             };
@@ -200,8 +226,6 @@ export const OtpVerification = async (req: Request, res: Response) => {
 
         //register otp verification
         if (response.isVerified === false) {
-
-
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false })
             if (data) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
@@ -309,10 +333,10 @@ export const updateUser = async (req: Request, res: Response) => {
         const body = req.body;
 
         const data = await userModel.findOne({ _id: body.id, isActive: true, isVerified: true, isDelete: false });
-        if (data ) {
+        if (data) {
             const updateuser = await userModel.findByIdAndUpdate({ _id: body.id, isActive: true, isVerified: true, isDeleted: false }, { $set: body }, { new: true });
             return res.status(200).json(new apiResponse(200, responseMessage.signupSuccess, updateuser, {}))
-        }else {
+        } else {
             return res.status(401).json(new apiResponse(401, responseMessage.invalidCraditional, {}, {}))
         }
 

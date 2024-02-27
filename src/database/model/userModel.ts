@@ -3,15 +3,18 @@ import mongoose from "mongoose";
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };
 let indiaTime = buyAT.toLocaleString('en-US', options);
-console.log('👻👻indianTime', indiaTime)
 
 const userSchema = new mongoose.Schema({
     fullname: { type: String, default: null },
     phoneNumber: { type: String, default: null },
     email: { type: String, default: null },
     otp: { type: String, default: null },
-    role:{ type: Number, default :null },
-    location:{ type: String, default :null },
+    usingPassword: { type: Boolean, default: null },
+    password: { type: String, default: null },
+    role: { type: Number, default: null }, //admin - 0 and user - 1
+    plan: { type: Number, default: null },
+    totalUsePlan: { type: Number, default: null },
+    location: { type: String, default: null },
     access_key: { type: String, default: null },
     request_token: { type: String, default: null },
     z_user_id: { type: String, default: null },

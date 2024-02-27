@@ -7,8 +7,26 @@ import { apiResponse } from '../common'
 //user registration
 export const signUp = async (req: Request, res: Response, next: any) => {
 
-var schema = Joi.object({phoneNumber: Joi.string().required().pattern(/^[0-9]{10}$/).messages({'any.required': 'phoneNumber is required','string.pattern.base': 'phoneNumber must be a 10-digit number'})})
+    var schema = Joi.object({
+        phoneNumber: Joi.string()
+            .required()
+            .pattern(/^[0-9]{10}$/)
+            .messages({
+                'any.required': 'phoneNumber is required', 'string.pattern.base': 'phoneNumber must be a 10-digit number'
+            }),
+        role: Joi.number()
+            .required()
+            .valid(0, 1)
+            .messages({
+                'any.required': 'role is required',
+                'any.only': 'role must be 0 or 1'
+            }),
+        password: Joi.string()
+            .messages({
+                'any.required': 'phoneNumber is required', 'string.pattern.base': 'phoneNumber must be a 10-digit number'
+            })
 
+    })
 
     schema.validateAsync(req.body).then(result => {
         return next()

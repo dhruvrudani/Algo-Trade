@@ -46,8 +46,14 @@ export const buystock = async (req: Request, res: Response) => {
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
-        const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
-
+        const alluserdata = await userModel.find({
+            isActive: true,
+            isDelete: false,
+            isVerified: true,
+            role: 1,
+            $expr: { $lt: ['$totalUsePlan', '$plan'] }
+        });
+        console.log(alluserdata);
         const promises = alluserdata.map(async userData => {
             const quantityObj = await tradeQuantity.findOne({ user_id: userData.id });
             return buyTradeFunction(req, res, userData, body, resultAdminTradeEnter, quantityObj);

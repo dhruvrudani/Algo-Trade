@@ -1,11 +1,11 @@
 {
     "status": "success",
     "data": {
-        "user_id": "K0101",
+        "user_id": "H0101",
         "user_type": "individual",
-        "email": "krish@gmail.com",
-        "user_name": "krish patel",
-        "user_shortname": "KP",
+        "email": "harsh@gmail.com",
+        "user_name": "harsh patel",
+        "user_shortname": "HP",
         "broker": "ZERODHA",
         "exchanges": [
             "BFO",
@@ -17,7 +17,7 @@
             "MF",
             "NFO"
         ],
-        "products": [
+        "products": [   
             "CNC",
             "NRML",
             "MIS",
