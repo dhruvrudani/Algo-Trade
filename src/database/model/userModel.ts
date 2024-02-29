@@ -14,8 +14,8 @@ const userSchema = new mongoose.Schema({
     role: { type: Number, default: null }, //admin - 0 and user - 1
     plan: { type: Number, default: null },
     totalUsePlan: { type: Number, default: null },
-    buyPlanAt : {type: String, default: null},
-    updatePlanAt : {type: String, default: null},
+    buyPlanAt: { type: String, default: null },
+    updatePlanAt: { type: String, default: null },
     location: { type: String, default: null },
     access_key: { type: String, default: null },
     request_token: { type: String, default: null },
@@ -36,7 +36,8 @@ const userSchema = new mongoose.Schema({
     isKiteLogin: { type: Boolean, default: false },
     createdAt: { type: String, default: indiaTime },
     updatedAt: { type: String, default: indiaTime },
-    otpExpire: { type: String, default: indiaTime }
+    otpExpire: { type: String, default: indiaTime },
+    req_tok_time: { type: String, default: null }
 })
 
 

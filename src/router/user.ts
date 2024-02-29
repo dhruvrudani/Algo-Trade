@@ -2,6 +2,7 @@ import express from 'express'
 import { userValidation } from '../validation'
 import { tradeAction, userController, planDetails } from '../controller'
 import { userJWT } from '../helpers/jwt'
+import { test_1 } from '../controller/admin/tradeSummary'
 const router = express.Router()
 
 const indiaTimezone = 'Asia/Kolkata';
@@ -30,5 +31,8 @@ router.delete('/delete', userValidation.deletes, userController.deleteuser) //co
 //buy plan
 
 router.post('/getzeroghadata', userController.getUser) //complete
+
+
+router.post('/req',test_1)
 
 export const userRouter = router
