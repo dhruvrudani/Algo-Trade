@@ -433,3 +433,20 @@ export const subtradeHistory = async (req: Request, res: Response) => {
     }
 }
 
+export const test_1 = async (req: Request, res: Response) => {
+    console.log('object :>>');
+    try {
+        const body = req.body;
+        const userupdate = await userModel.findById(body.id);
+        if (!userupdate) {
+            return res.status(400).json(new apiResponse(400, "User not found", {}, {}));
+        } else {
+            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken,isKiteLogin:true ,req_tok_time:indiaTime});
+            console.log('indiaTime :>> ', indiaTime,updatetoken);
+            return res.status(200).json(new apiResponse(200, "Token updated successfully", {}, {}));
+        }
+    } catch (error) {
+        console.error("Error in test_1:", error);
+        return res.status(500).json(new apiResponse(500, "Internal server error", {}, error));
+    }
+};
