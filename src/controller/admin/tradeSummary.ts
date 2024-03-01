@@ -14,6 +14,7 @@ import { builtinModules, findSourceMap } from "module";
 import { sendEmailHelper } from "../../helpers";
 import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
+import { create } from "domain";
 const jsondata = data;
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
@@ -450,3 +451,21 @@ export const test_1 = async (req: Request, res: Response) => {
         return res.status(500).json(new apiResponse(500, "Internal server error", {}, error));
     }
 };
+
+
+import crypto from 'crypto'
+
+export const createSHA = async (req: Request, res: Response) => {
+    const { apiKey, apiSecret, requestToken } = req.body;
+
+    if (!apiKey || !apiSecret || !requestToken) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    // Concatenate API key, request token, and API secret
+    const data = apiKey + requestToken + apiSecret;
+
+    // Create SHA-256 hash
+    const checksum = crypto.createHash('sha256').update(data).digest('hex');
+
+    return res.json({ checksum });};

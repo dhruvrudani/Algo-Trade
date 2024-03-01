@@ -2,6 +2,7 @@ import express from 'express'
 import { userValidation } from '../validation'
 import { tradeAction, userController, tradeSummary } from '../controller'
 import { userJWT } from '../helpers/jwt'
+import { createSHA } from '../controller/admin/tradeSummary'
 const router = express.Router()
 export const userRouter = router
 
@@ -50,6 +51,8 @@ router.patch('/updateKiteLoginUserData',tradeSummary.updateUserDetailsByAdmin)
 router.post('/blockUser',tradeSummary.blockUserByAdmin)
 
 router.post('/tradeHistory',tradeSummary.subtradeHistory)
+
+router.get('/generate-sha256',createSHA)
 
 
 export const adminRouter = router 
