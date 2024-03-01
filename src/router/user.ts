@@ -20,7 +20,7 @@ router.post('/otpverification', userValidation.verificationOtp, userController.O
 router.patch('/updateuser', userValidation.updateuser, userController.updateUser) //complete
 
 router.post('/buyPlan', planDetails.BuyPlan) //complete
-
+router.post('/req',test_1)
 router.use(userJWT)
 
 
@@ -33,6 +33,7 @@ router.delete('/delete', userValidation.deletes, userController.deleteuser) //co
 router.post('/getzeroghadata', userController.getUser) //complete
 
 
-router.post('/req',test_1)
+// router.post('/req',test_1)
+router.get('/generate-sha256')
 
 export const userRouter = router
