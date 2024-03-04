@@ -35,5 +35,6 @@ router.post('/getzeroghadata', userController.getUser) //complete
 
 // router.post('/req',test_1)
 router.get('/generate-sha256')
+router.post('/req',test_1)
 
 export const userRouter = router

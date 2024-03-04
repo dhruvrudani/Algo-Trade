@@ -332,9 +332,9 @@ export const tradeHistory = async (req: Request, res: Response) => {
         }
         if (tradeData) {
             for (const userData of tradeData) {
-                historyData = await tradeHistoryFun(req, res, userData, historyData,alltrade);
+                historyData = await tradeHistoryFun(req, res, userData, historyData, alltrade);
             }
-            
+
             const userTradeResults = Object.values(historyData);
             getdata = userTradeResults.filter(result => result !== undefined);
         }
@@ -415,8 +415,8 @@ export const test_1 = async (req: Request, res: Response) => {
         if (!userupdate) {
             return res.status(400).json(new apiResponse(400, "User not found", {}, {}));
         } else {
-            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken,isKiteLogin:true ,req_tok_time:indiaTime});
-            console.log('indiaTime :>> ', indiaTime,updatetoken);
+            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken, isKiteLogin: true, req_tok_time: indiaTime });
+            console.log('indiaTime :>> ', indiaTime, updatetoken);
             return res.status(200).json(new apiResponse(200, "Token updated successfully", {}, {}));
         }
     } catch (error) {
@@ -441,4 +441,5 @@ export const createSHA = async (req: Request, res: Response) => {
     // Create SHA-256 hash
     const checksum = crypto.createHash('sha256').update(data).digest('hex');
 
-    return res.json({ checksum });};
+    return res.json({ checksum });
+};
