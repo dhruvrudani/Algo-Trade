@@ -4,7 +4,6 @@ import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database"
 import { tradeHistoryFun } from "../../helpers/kiteConnect/index";
 
 import { apiResponse } from "../../common";
-import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
 import { stockQuantity } from "../../helpers/testing";
@@ -17,7 +16,6 @@ import { kitelogin, sendEmailHelper } from "../../helpers";
 import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
 import { create } from "domain";
-const jsondata = data;
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
@@ -428,7 +426,6 @@ export const test_1 = async (req: Request, res: Response) => {
         return res.status(500).json(new apiResponse(500, "Internal server error", {}, error));
     }
 };
-
 
 import crypto from 'crypto'
 

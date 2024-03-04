@@ -2,16 +2,16 @@ import { KiteConnect } from "kiteconnect";
 import config from "config";
 import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database";
 import { apiResponse } from "../../common";
-import data from "../../helpers/userdata.json";
+
 import fund from "../../helpers/funding.json";
 import { responseMessage, stockQuantity } from "../../helpers/index";
-import { buy, sell, getFundsAndMargins } from "../../helpers/kiteConnect/index";
+import { getFundsAndMargins } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { ObjectId } from 'mongoose';
-const jsondata = data;
+
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
@@ -19,9 +19,9 @@ let options = { timeZone: 'Asia/kolkata', hour12: false }
 let indiaTime = usTime.toLocaleString('en-US', options)
 
 
-export const tradeHistoryFun = async (req: Request, res: Response, e, historyData,alltrade) => {
+export const tradeHistoryFun = async (req: Request, res: Response, e, historyData, alltrade) => {
     try {
-        
+
 
         for (let j = 0; j < e['trade'].length; j++) {
             const data = e['trade'][j];

@@ -2,16 +2,16 @@ import { KiteConnect } from "kiteconnect";
 import config from "config";
 import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database";
 import { apiResponse } from "../../common";
-import data from "../../helpers/userdata.json";
+
 import fund from "../../helpers/funding.json";
 import { responseMessage, stockQuantity } from "../../helpers/index";
-import { buy, sell, getFundsAndMargins, buyTradeFunction, sellTradeFunction } from "../../helpers/kiteConnect/index";
+import {getFundsAndMargins, buyTradeFunction, sellTradeFunction } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { ObjectId } from 'mongoose';
-const jsondata = data;
+
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
@@ -57,7 +57,7 @@ export const buystock = async (req: Request, res: Response) => {
             const quantityObj = await tradeQuantity.findOne({ user_id: userData.id });
             return buyTradeFunction(req, res, userData, body, resultAdminTradeEnter, quantityObj);
         });
-
+        
         const userTradeResults = await Promise.all(promises);
         userTradeEnter = userTradeResults.filter(result => result !== undefined);
 
