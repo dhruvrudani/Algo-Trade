@@ -1,10 +1,10 @@
 {
     "status": "success",
     "data": {
-        "user_id": "U0101",
+        "user_id": "U0401",
         "user_type": "individual",
-        "email": "user1@gmail.com",
-        "user_name": "user1 xyz",
+        "email": "user4@gmail.com",
+        "user_name": "user4 xyz",
         "user_shortname": "UX",
         "broker": "ZERODHA",
         "exchanges": [
