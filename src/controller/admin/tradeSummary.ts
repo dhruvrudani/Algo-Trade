@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { builtinModules, findSourceMap } from "module";
-import { sendEmailHelper } from "../../helpers";
+import { kitelogin, sendEmailHelper } from "../../helpers";
 import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
 import { create } from "domain";
@@ -455,9 +455,11 @@ export const test_1 = async (req: Request, res: Response) => {
 
 import crypto from 'crypto'
 
+
 export const createSHA = async (req: Request, res: Response) => {
     const { apiKey, apiSecret, requestToken } = req.body;
-
+    kitelogin();
+return
     if (!apiKey || !apiSecret || !requestToken) {
         return res.status(400).json({ error: 'Missing required parameters' });
     }
@@ -469,3 +471,8 @@ export const createSHA = async (req: Request, res: Response) => {
     const checksum = crypto.createHash('sha256').update(data).digest('hex');
 
     return res.json({ checksum });};
+
+
+
+
+   
