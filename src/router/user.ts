@@ -2,7 +2,7 @@ import express from 'express'
 import { userValidation } from '../validation'
 import { tradeAction, userController, planDetails } from '../controller'
 import { userJWT } from '../helpers/jwt'
-import { test_1 } from '../controller/admin/tradeSummary'
+import {  test_1 } from '../controller/admin/tradeSummary'
 const router = express.Router()
 
 const indiaTimezone = 'Asia/Kolkata';
@@ -34,6 +34,6 @@ router.post('/getzeroghadata', userController.getUser) //complete
 
 
 // router.post('/req',test_1)
-router.get('/generate-sha256')
+
 
 export const userRouter = router

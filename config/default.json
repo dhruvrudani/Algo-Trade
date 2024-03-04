@@ -1,15 +1,7 @@
 {
-    "db_url": "mongodb+srv://mit:epINjbFJ30UOAk9s@mit.fsaq7gz.mongodb.net/algotrade",
-    "api_key": "c8klttwlwiop0bi5",
-    "api_secret": " ",
-    
-    
-    "nodeMail": {
-        "mail": "bhv1912@gmail.com",
-        "password": "yrht igxv nqog eyfq",
-        "service": "gmail"
-    },
-    "salt" : 10 ,
+  "db_url": "mongodb+srv://mit:epINjbFJ30UOAk9s@mit.fsaq7gz.mongodb.net/algotrade",
+  "api_key": "9wgina6u558jh083",
+  "api_secret": "66izcfeq5uqpm4n9gd9bumdgkqs0sxnq",
 
     "jwt_token_secret" : "algo_trade_jwt_token_secret_key",
     "refresh_jwt_token_secret" : "algo_trade_refresh_jwt_token_secret_key"

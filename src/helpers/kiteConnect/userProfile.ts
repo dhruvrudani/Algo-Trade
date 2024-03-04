@@ -20,30 +20,40 @@ const kite = new KiteConnect({
 
 export const kitelogin = async () => {
     try {
-        const loginURL = kite.getLoginURL();
-        console.log("Login URL:", loginURL);
+        // const loginURL = kite.getLoginURL();
+        // console.log("Login URL:", loginURL);
 
         // In a real application, you need to redirect the user to loginURL and handle the callback to obtain the requestToken.
 
-        const requestToken = '1CblHiAlk7ZZ4MJAsMNIDtNv3fd2M0L5'; // Replace with the actual requestToken obtained from the callback.
+        const requestToken = '3un54xHiyGptxPQlmTYdGeKjni0XaP4Z';
 
-        const response = await kite.generateSession(requestToken, config.get('api_secret'));
+        // Generate session using requestToken
+        const response = await kite.generateSession(requestToken, '66izcfeq5uqpm4n9gd9bumdgkqs0sxnq');
+        console.log('response :>> ', response);
 
-        const accessToken = response.access_token;
-        kite.setAccessToken(accessToken);
+        // Check if session generation was successful
+        if (response.status === 'success') {
+            const accessToken = response.access_token;
+            kite.setAccessToken(accessToken);
 
-        const userProfile = await new Promise((resolve, reject) => {
-            kite.getProfile((error, data) => {
-                if (error) {
-                    console.log("Error getting user profile:", error);
-                    reject(error);
-                } else {
-                    resolve(data);
-                }
+            // Fetch user profile using the generated session
+            const userProfile = await new Promise((resolve, reject) => {
+                kite.getProfile((error, data) => {
+                    if (error) {
+                        console.log("Error getting user profile:", error);
+                        reject(error);
+                    } else {
+                        resolve(data);
+                    }
+                });
             });
-        });
-
-        return userProfile;
+            console.log(userProfile);
+            return userProfile;
+        } else {
+            // Handle error response
+            console.log("Session generation failed:", response);
+            throw new Error("Session generation failed");
+        }
     } catch (error) {
         console.log("Error in kitelogin:", error);
         throw error;

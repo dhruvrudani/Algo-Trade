@@ -11,7 +11,8 @@ import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { checkPreferences } from "joi";
 import bcrypt from "bcryptjs";
-const jsondata = data;
+import { json } from "body-parser";
+// const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect
 const kite = new KiteConnect({
@@ -20,16 +21,17 @@ const kite = new KiteConnect({
 
 export const getUser = async (req: Request, res: Response) => {
     try {
-        // const jsondata = kitelogin()
+        
+        const jsondata = kitelogin()
+        console.log(jsondata);
         const data = jsondata["data"];
-        // console.log(data);
         const body = req.body;
         const userdata = await userModel.findOneAndUpdate({
             _id: body.id,
             isActive: true, isDelete: false, isVerified: true
         }, {
             $set: {
-                access_key: "123",
+                access_key: data.access_token,
                 z_user_id: data.user_id,
                 z_user_type: data.user_type,
                 z_email: data.email,
