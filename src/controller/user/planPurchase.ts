@@ -2,7 +2,7 @@ import { KiteConnect } from "kiteconnect";
 import config from "config";
 import { userModel } from "../../database";
 import { apiResponse } from "../../common";
-import data from "../../helpers/userdata.json";
+
 import { responseMessage } from "../../helpers/response";
 import { kitelogin } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";

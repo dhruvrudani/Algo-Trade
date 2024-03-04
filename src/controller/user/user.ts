@@ -1,8 +1,7 @@
 import { KiteConnect } from "kiteconnect";
 import config from "config";
-import { userModel } from "../../database";
+import { userModel, connectHistory } from "../../database";
 import { apiResponse } from "../../common";
-import data from "../../helpers/userdata.json";
 import { responseMessage } from "../../helpers/response";
 import { kitelogin } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
@@ -21,17 +20,19 @@ const kite = new KiteConnect({
 
 export const getUser = async (req: Request, res: Response) => {
     try {
-        
-        const jsondata = kitelogin()
-        console.log(jsondata);
-        const data = jsondata["data"];
+        let buyAT = new Date();
+        let options = { timeZone: 'Asia/Kolkata', hour12: false };
+        let indiaTime = buyAT.toLocaleString('en-US', options);
+        const customizedTime = buyAT.toLocaleDateString('en-US', options);
+
+        const { data, accessToken } = await kitelogin()
         const body = req.body;
         const userdata = await userModel.findOneAndUpdate({
             _id: body.id,
             isActive: true, isDelete: false, isVerified: true
         }, {
             $set: {
-                access_key: data.access_token,
+                access_key: accessToken,
                 z_user_id: data.user_id,
                 z_user_type: data.user_type,
                 z_email: data.email,
@@ -46,13 +47,95 @@ export const getUser = async (req: Request, res: Response) => {
                 isKiteLogin: true
             }
         }, { new: true })
+
+        const connectDetails = await connectHistory.find({ date: customizedTime })
+
+        if (connectDetails) {
+            const connectData = await connectHistory.findOneAndUpdate(
+                { date: customizedTime },
+                {
+                    $push: {
+                        'details': {
+                            user_id: body.id,
+                            loginAt: indiaTime
+                        }
+                    }
+                },
+                { new: true } // This option returns the modified document
+            );
+        } else {
+            const connectData = new connectHistory({
+                date: customizedTime,
+                details: {
+                    user_id: body.id,
+                    loginAt: indiaTime
+                }
+            })
+        }
         return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
 
     } catch (error) {
-        return res.status(500).send(error)
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 }
 
+
+//logout from the kite connect
+
+export const kitelogout = async (req: Request, res: Response) => {
+    try {
+        let buyAT = new Date();
+        let options = { timeZone: 'Asia/Kolkata', hour12: false };
+        let indiaTime = buyAT.toLocaleString('en-US', options);
+        const customizedTime = buyAT.toLocaleDateString('en-US', options);
+        const body = req.body;
+
+        const userData = await userModel.findById({ _id: body.id });
+
+        if (userData.isKiteLogin === true && userData.isActive === true && userData.isDelete === false && userData.isVerified === true) {
+            const userData = await userModel.findByIdAndUpdate({ _id: body.id }, { isKiteLogin: false }, { new: true });
+
+            const connectDetails = await connectHistory.find({ date: customizedTime })
+            if (connectDetails) {
+                const connectData = await connectHistory.findOneAndUpdate(
+                    { date: customizedTime },
+                    {
+                        $push: {
+                            'details': {
+                                user_id: body.id,
+                                logoutAt: indiaTime
+                            }
+                        }
+                    },
+                    { new: true } // This option returns the modified document
+                );
+            } else {
+                const connectData = new connectHistory({
+                    date: customizedTime,
+                    details: {
+                        user_id: body.id,
+                        logoutAt: indiaTime
+                    }
+                })
+            }
+            return res.status(200).json(new apiResponse(200, "kite logout is successfully", userData, {}));
+        } else if (userData.isKiteLogin === false) {
+            return res.status(200).json(new apiResponse(200, "you already logout from the kite", {}, {}));
+
+        } else if (userData.isActive === false) {
+            return res.status(200).json(new apiResponse(200, "you account does not active", {}, {}));
+
+        } else if (userData.isDelete === false) {
+            return res.status(200).json(new apiResponse(200, "account is deleted", {}, {}));
+
+        } else if (userData.isVerified === false) {
+            return res.status(200).json(new apiResponse(200, "user does not verified", {}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+
+    }
+}
 // signup API
 export const signUp = async (req: Request, res: Response) => {
     try {
