@@ -50,9 +50,10 @@ router.patch('/updateKiteLoginUserData',tradeSummary.updateUserDetailsByAdmin)
 //block kite linked user
 router.post('/blockUser',tradeSummary.blockUserByAdmin)
 
-router.post('/tradeHistory',tradeSummary.subtradeHistory)
+router.post('/tradeHistory',tradeSummary.tradeHistory)
 
 router.get('/generate-sha256',createSHA)
 
+router.post('/subtradeHistory',tradeSummary.subtradeHistory)
 
 export const adminRouter = router 

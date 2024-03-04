@@ -1,6 +1,8 @@
 import { KiteConnect } from "kiteconnect";
 import config from "config";
 import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database";
+import { tradeHistoryFun } from "../../helpers/kiteConnect/index";
+
 import { apiResponse } from "../../common";
 import data from "../../helpers/userdata.json";
 import fund from "../../helpers/funding.json";
@@ -323,54 +325,29 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
     try {
-        let alltrade = {};
         let tradeData;
+        let historyData = {};
+        let alltrade = {};
+        let getdata = {};
         if (body.tradeTime === null) {
             tradeData = await userTrade.find();
         } else if (body.tradeTime !== null) {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
         }
-        const historyData = {};
         if (tradeData) {
-            for (let i = 0; i < tradeData.length; i++) {
-                const e = tradeData[i];
-                for (let j = 0; j < e['trade'].length; j++) {
-                    const data = e['trade'][j];
-                    console.log(i, ":", data);
-                    if (data.isSelled === true) {
-                        const key = `${e.tradeTime}_${data.user_id}`;
-                        const userData = await userModel.findById(data.user_id);
-                        if (Object.keys(alltrade).length !== 0 && alltrade[key]) {
-                            alltrade[key] += data.profit;
-                            historyData[data.user_id] = {
-                                fullname: userData.fullname,
-                                email: userData.email,
-                                phoneNumber: userData.phoneNumber,
-                                z_user_id: userData.z_user_id,
-                                date: e.tradeTime,
-                                profit: (historyData[data.user_id]?.profit || 0) + data.profit,
-                            };
-                        } else {
-                            alltrade[key] = data.profit;
-                            historyData[data.user_id] = {
-                                fullname: userData.fullname,
-                                email: userData.email,
-                                phoneNumber: userData.phoneNumber,
-                                z_user_id: userData.z_user_id,
-                                date: e.tradeTime,
-                                profit: data.profit,
-                            };
-                        }
-                    }
-                }
+            for (const userData of tradeData) {
+                historyData = await tradeHistoryFun(req, res, userData, historyData, alltrade);
             }
-        }
 
-        return res.status(200).json(new apiResponse(200, "trade history", { historyData }, {}));
+            const userTradeResults = Object.values(historyData);
+            getdata = userTradeResults.filter(result => result !== undefined);
+        }
+        return res.status(200).json(new apiResponse(200, "trade history", { getdata }, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 };
+
 
 //sub category history API
 
@@ -385,7 +362,7 @@ export const subtradeHistory = async (req: Request, res: Response) => {
         } else if (body.tradeTime !== null) {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
         }
-        
+
 
         for (const e of tradeData) {
             const userdata = e['trade'];
@@ -442,8 +419,8 @@ export const test_1 = async (req: Request, res: Response) => {
         if (!userupdate) {
             return res.status(400).json(new apiResponse(400, "User not found", {}, {}));
         } else {
-            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken,isKiteLogin:true ,req_tok_time:indiaTime});
-            console.log('indiaTime :>> ', indiaTime,updatetoken);
+            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken, isKiteLogin: true, req_tok_time: indiaTime });
+            console.log('indiaTime :>> ', indiaTime, updatetoken);
             return res.status(200).json(new apiResponse(200, "Token updated successfully", {}, {}));
         }
     } catch (error) {
