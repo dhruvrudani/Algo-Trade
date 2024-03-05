@@ -13,15 +13,17 @@ const kite = new KiteConnect({
 
 export const buy = async (data) => {
 
-    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    const { access_key, tradingsymbol, quantity, exchange, order_type, product, price } = data;
     kite.setAccessToken(access_key);
 
-    try {
-        const response = await kite.ltp([tradingsymbol]);
-        const instrumentToken = response[tradingsymbol].instrument_token;
 
-        // Place a market order to buy
-        const orderResponse = await kite.placeOrder(id, "regular", {
+    // const response = await kite.ltp([tradingsymbol]);
+    // const instrumentToken = response[tradingsymbol].instrument_token;
+
+    // Place a market order to buy
+    if (order_type === "MARKET") {
+
+        return await kite.placeOrder("regular", {
             tradingsymbol: tradingsymbol,
             exchange: exchange,
             transaction_type: "BUY",
@@ -29,31 +31,47 @@ export const buy = async (data) => {
             quantity,
             product: product,
         });
-        if (orderResponse) {
-            console.log(`Order placed successfully for user ${id}:`, orderResponse);
-        }
-    } catch (error) {
-        console.error(`Error placing order for user ${id}:`, error);
+    } else {
+        return await kite.placeOrder("regular", {
+            tradingsymbol: tradingsymbol,
+            exchange: exchange,
+            transaction_type: "BUY",
+            order_type: order_type,
+            quantity,
+            product: product,
+            price: price
+        });
     }
 }
 
 export const sell = async (data) => {
-    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product, price } = data;
     kite.setAccessToken(access_key);
     try {
-        const response = await kite.ltp([tradingsymbol]);
-        const instrumentToken = response[tradingsymbol].instrument_token;
+        // const response = await kite.ltp([tradingsymbol]);
+        // const instrumentToken = response[tradingsymbol].instrument_token;
         // Place a market order to buy
-        const orderResponse = await kite.placeOrder(id, "regular", {
-            tradingsymbol: tradingsymbol,
-            exchange: exchange,
-            transaction_type: "SELL",
-            order_type: order_type,
-            quantity,
-            product: product,
-        });
-        if (orderResponse) {
-            console.log(`Order placed successfully for user ${id}:`, orderResponse);
+
+        if (order_type === "MARKET") {
+
+            return await kite.placeOrder("regular", {
+                tradingsymbol: tradingsymbol,
+                exchange: exchange,
+                transaction_type: "SELL",
+                order_type: order_type,
+                quantity,
+                product: product,
+            });
+        } else {
+            return await kite.placeOrder("regular", {
+                tradingsymbol: tradingsymbol,
+                exchange: exchange,
+                transaction_type: "SELL",
+                order_type: order_type,
+                quantity,
+                product: product,
+                price: price
+            });
         }
     } catch (error) {
         console.error(`Error placing order for user ${id}:`, error);
@@ -76,4 +94,16 @@ export const retrieveOrders = async (accessToken) => {
 
     return await kite.getOrders()
 
+}
+
+export const getOrderTrades = async (accessToken, order_id) => {
+
+    kite.setAccessToken(accessToken);
+
+    kite.getOrderTrades(order_id)
+        .then(function (response) {
+            return response;
+        }).catch(function (err) {
+            return err;
+        });
 }
