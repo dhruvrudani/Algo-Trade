@@ -5,7 +5,7 @@ import { apiResponse } from "../../common";
 
 import fund from "../../helpers/funding.json";
 import { responseMessage, stockQuantity } from "../../helpers/index";
-import {getFundsAndMargins, buyTradeFunction, sellTradeFunction } from "../../helpers/kiteConnect/index";
+import { getFundsAndMargins, buyTradeFunction, sellTradeFunction ,getOrderTrades} from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -34,15 +34,28 @@ export const buystock = async (req: Request, res: Response) => {
         const random5DigitNumber = generateRandomNumber();
         let userTradeEnter: any = [];
         const body = req.body
-        const adminTradeEnter: any = new adminTrade({
-            tradingsymbol: body.tradingsymbol,
-            exchange: body.exchange,
-            transaction_type: body.transaction_type,
-            order_type: body.order_type,
-            product: body.product,
-            buyPrice: body.price,
-            buyAT: indiaTime
-        })
+        let adminTradeEnter;
+        if (body.order_type === "MARKET") {
+
+            adminTradeEnter = new adminTrade({
+                tradingsymbol: body.tradingsymbol,
+                exchange: body.exchange,
+                transaction_type: body.transaction_type,
+                order_type: body.order_type,
+                product: body.product,
+                buyAT: indiaTime
+            })
+        } else {
+            adminTradeEnter = new adminTrade({
+                tradingsymbol: body.tradingsymbol,
+                exchange: body.exchange,
+                transaction_type: body.transaction_type,
+                order_type: body.order_type,
+                product: body.product,
+                buyPrice: body.price,
+                buyAT: indiaTime
+            })
+        }
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
 
@@ -57,7 +70,7 @@ export const buystock = async (req: Request, res: Response) => {
             const quantityObj = await tradeQuantity.findOne({ user_id: userData.id });
             return buyTradeFunction(req, res, userData, body, resultAdminTradeEnter, quantityObj);
         });
-        
+
         const userTradeResults = await Promise.all(promises);
         userTradeEnter = userTradeResults.filter(result => result !== undefined);
 
