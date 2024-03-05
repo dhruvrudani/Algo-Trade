@@ -86,7 +86,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                 if (access_key && isKiteLogin) {
 
                     if (Number(price) <= fund) {
-                        const random5DigitNumber = generateRandomNumber();
                         const data: any = {
                             access_key: userData.access_key,
                             id: id,
@@ -99,7 +98,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                         };
 
                         const buyData = await buy(data);
-                        
+
                         const alluserdata = await userModel.findOneAndUpdate(
                             {
                                 _id: userData._id,
@@ -117,7 +116,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                         return returnObj = {
                             user_id: userData._id,
                             tradingsymbol: body.tradingsymbol,
-                            buyOrderId: random5DigitNumber,
+                            buyOrderId: buyData.order_id,
                             quantity,
                             isSelled: false,
                             buyKitePrice: body.price,
@@ -132,7 +131,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
 
                         if (updatedQuantity > 0) {
 
-                            const random5DigitNumber = generateRandomNumber();
                             const data: any = {
                                 access_key: userData.access_key,
                                 id: id,
@@ -162,7 +160,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData, bo
                             return returnObj = {
                                 user_id: userData._id,
                                 tradingsymbol: body.tradingsymbol,
-                                buyOrderId: random5DigitNumber,
+                                buyOrderId: buyData.order_id,
                                 quantity: updatedQuantity,
                                 isSelled: false,
                                 buyKitePrice: body.price,
@@ -216,13 +214,12 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
             const id = userdata._id;
             let quantity = (await tradeQuantity.findOne({ user_id: id }))?.quantity || 0;
 
-            if(body.order_type === "MARKET"){
+            if (body.order_type === "MARKET") {
                 if (quantity > 0 && userdata.isKiteLogin === true) {
                     for (const sellData of buyTradeData.trade) {
                         if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
                             quantity -= sellData.quantity;
                             const order_id = sellData.buyOrderId;
-                            const random5DigitNumber = generateRandomNumber();
                             const sellrequireddata: any = {
                                 access_key: sellData.access_key,
                                 id: id,
@@ -232,10 +229,10 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                                 order_type: body.order_type,
                                 product: body.product
                             };
-    
-                            await sell(sellrequireddata);
-    
-                            const profit = (Number(sellData.quantity) * Number(body.sellPrice) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
+
+                            const sellDataResponse = await sell(sellrequireddata);
+                            const tradeData = getOrderTrades(userdata.access_key, sellDataResponse.order_id);
+                            const profit = (Number(sellData.quantity) * Number(tradeData['average_price']) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
                             console.log((sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize))
                             await userTrade.updateOne(
                                 { "trade.user_id": id, "trade.buyOrderId": order_id },
@@ -243,14 +240,14 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                                     $set: {
                                         "trade.$.isSelled": true,
                                         "trade.$.sellAt": indiaTime,
-                                        "trade.$.sellOrderId": random5DigitNumber,
-                                        "trade.$.sellKitePrice": body.sellPrice,
+                                        "trade.$.sellOrderId": sellDataResponse.order_id,
+                                        "trade.$.sellKitePrice": tradeData["average_price"],
                                         "trade.$.profit": profit,
                                         "trade.$.selltradeStatus": null
-    
+
                                     },
                                 });
-    
+
                             const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
                             for (const tradeData of data.trade) {
                                 if (String(tradeData.user_id) === String(id)) {
@@ -260,46 +257,45 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                         }
                     }
                 }
-            }
+            } else {
+                if (quantity > 0 && userdata.isKiteLogin === true) {
+                    for (const sellData of buyTradeData.trade) {
+                        if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
+                            quantity -= sellData.quantity;
+                            const order_id = sellData.buyOrderId;
+                            const sellrequireddata: any = {
+                                access_key: sellData.access_key,
+                                id: id,
+                                tradingsymbol: body.tradingsymbol,
+                                quantity: quantity,
+                                exchange: body.exchange,
+                                order_type: body.order_type,
+                                product: body.product
+                            };
 
-            if (quantity > 0 && userdata.isKiteLogin === true) {
-                for (const sellData of buyTradeData.trade) {
-                    if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
-                        quantity -= sellData.quantity;
-                        const order_id = sellData.buyOrderId;
-                        const random5DigitNumber = generateRandomNumber();
-                        const sellrequireddata: any = {
-                            access_key: sellData.access_key,
-                            id: id,
-                            tradingsymbol: body.tradingsymbol,
-                            quantity: quantity,
-                            exchange: body.exchange,
-                            order_type: body.order_type,
-                            product: body.product
-                        };
+                            const sellDataResponse = await sell(sellrequireddata);
 
-                        // sell(sellrequireddata);
+                            const profit = (Number(sellData.quantity) * Number(body.sellPrice) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
+                            console.log((sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize))
+                            await userTrade.updateOne(
+                                { "trade.user_id": id, "trade.buyOrderId": order_id },
+                                {
+                                    $set: {
+                                        "trade.$.isSelled": true,
+                                        "trade.$.sellAt": indiaTime,
+                                        "trade.$.sellOrderId": sellDataResponse.order_id,
+                                        "trade.$.sellKitePrice": body.sellPrice,
+                                        "trade.$.profit": profit,
+                                        "trade.$.selltradeStatus": null
 
-                        const profit = (Number(sellData.quantity) * Number(body.sellPrice) * Number(buyTradeData.loatSize)) - (Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
-                        console.log((sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize))
-                        await userTrade.updateOne(
-                            { "trade.user_id": id, "trade.buyOrderId": order_id },
-                            {
-                                $set: {
-                                    "trade.$.isSelled": true,
-                                    "trade.$.sellAt": indiaTime,
-                                    "trade.$.sellOrderId": random5DigitNumber,
-                                    "trade.$.sellKitePrice": body.sellPrice,
-                                    "trade.$.profit": profit,
-                                    "trade.$.selltradeStatus": null
+                                    },
+                                });
 
-                                },
-                            });
-
-                        const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
-                        for (const tradeData of data.trade) {
-                            if (String(tradeData.user_id) === String(id)) {
-                                return obj = tradeData
+                            const data = await userTrade.findOne({ "trade.user_id": id, "trade.buyOrderId": order_id });
+                            for (const tradeData of data.trade) {
+                                if (String(tradeData.user_id) === String(id)) {
+                                    return obj = tradeData
+                                }
                             }
                         }
                     }
