@@ -322,15 +322,18 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
+    console.log('body :>> ', body,body.tradeTime === "",body.tradeTime !== "");
     try {
         let tradeData;
         let historyData = {};
         let alltrade = {};
         let getdata = {};
-        if (body.tradeTime === null) {
+        if (body.tradeTime === null) {  
             tradeData = await userTrade.find();
+            console.log('tradeData :>> ', tradeData);
         } else if (body.tradeTime !== null) {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
+            console.log('tradeData :>> ', tradeData);
         }
         if (tradeData) {
             for (const userData of tradeData) {
@@ -355,12 +358,11 @@ export const subtradeHistory = async (req: Request, res: Response) => {
         const alltrade = [];
         let tradeData;
 
-        if (body.tradeTime === null) {
+        if (body.tradeTime === "") {
             tradeData = await userTrade.find();
-        } else if (body.tradeTime !== null) {
+        } else if (body.tradeTime !== "") {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
         }
-
 
         for (const e of tradeData) {
             const userdata = e['trade'];
@@ -378,7 +380,7 @@ export const subtradeHistory = async (req: Request, res: Response) => {
                                 BuyPrice: data.buyKitePrice,
                                 SellPrice: "-",
                                 BuyStatus: data.buytradeStatus,
-                                SellStatus: "-",
+                                SellStatus: "-",    
                                 profit: "-"
 
                             });
@@ -433,7 +435,7 @@ import crypto from 'crypto'
 export const createSHA = async (req: Request, res: Response) => {
     const { apiKey, apiSecret, requestToken } = req.body;
     kitelogin();
-return
+
     if (!apiKey || !apiSecret || !requestToken) {
         return res.status(400).json({ error: 'Missing required parameters' });
     }

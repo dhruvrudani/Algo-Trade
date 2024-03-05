@@ -3,6 +3,7 @@ import { userValidation } from '../validation'
 import { tradeAction, userController, planDetails } from '../controller'
 import { userJWT } from '../helpers/jwt'
 import { test_1 } from '../controller/admin/tradeSummary'
+import { testkite } from '../helpers/test2'
 const router = express.Router()
 
 const indiaTimezone = 'Asia/Kolkata';
@@ -19,9 +20,10 @@ router.post('/otpverification', userValidation.verificationOtp, userController.O
 //update user details
 router.patch('/updateuser', userValidation.updateuser, userController.updateUser) //complete
 
-router.post('/req', test_1)
 router.post('/kitelogout', userController.kitelogout) //complete
-router.use(userJWT)
+// router.use(userJWT)
+router.post('/buyPlan', planDetails.BuyPlan) //complete
+router.post('/req',test_1)
 
 
 
@@ -38,5 +40,9 @@ router.post('/getzeroghadata', userController.getUser) //complete
 
 // router.post('/req',test_1)
 
+router.get('/generate-sha256')
+router.post('/req',test_1)
+router.post('/test1',testkite)
 
+router.use(userJWT)
 export const userRouter = router
