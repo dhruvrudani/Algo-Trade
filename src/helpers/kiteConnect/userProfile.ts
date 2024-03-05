@@ -29,7 +29,7 @@ export const kitelogin = async () => {
         const requestToken = '8Q4laM4L0BLJ2qpdM92LWZ91f6kVLunr';
 
         // Generate session using requestToken
-        const response = await kite.generateSession(requestToken, '66izcfeq5uqpm4n9gd9bumdgkqs0sxnq');
+        const response = await kite.generateSession(requestToken, kite.api_key);
 
         console.log('response :>> ', response);
         // Check if session generation was successful
@@ -44,7 +44,7 @@ export const kitelogin = async () => {
 
         console.log('user data ', data);
 
-        return {data,accessToken};
+        return { data, accessToken };
 
     } catch (error) {
         console.log("Error in kitelogin:", error);

@@ -9,6 +9,56 @@ const kite = new KiteConnect({
     api_key: config.get('api_key'),
 });
 
+//buy trade
+
+export const buy = async (data) => {
+
+    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    kite.setAccessToken(access_key);
+
+    try {
+        const response = await kite.ltp([tradingsymbol]);
+        const instrumentToken = response[tradingsymbol].instrument_token;
+
+        // Place a market order to buy
+        const orderResponse = await kite.placeOrder(id, "regular", {
+            tradingsymbol: tradingsymbol,
+            exchange: exchange,
+            transaction_type: "BUY",
+            order_type: order_type,
+            quantity,
+            product: product,
+        });
+        if (orderResponse) {
+            console.log(`Order placed successfully for user ${id}:`, orderResponse);
+        }
+    } catch (error) {
+        console.error(`Error placing order for user ${id}:`, error);
+    }
+}
+
+export const sell = async (data) => {
+    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product } = data;
+    kite.setAccessToken(access_key);
+    try {
+        const response = await kite.ltp([tradingsymbol]);
+        const instrumentToken = response[tradingsymbol].instrument_token;
+        // Place a market order to buy
+        const orderResponse = await kite.placeOrder(id, "regular", {
+            tradingsymbol: tradingsymbol,
+            exchange: exchange,
+            transaction_type: "SELL",
+            order_type: order_type,
+            quantity,
+            product: product,
+        });
+        if (orderResponse) {
+            console.log(`Order placed successfully for user ${id}:`, orderResponse);
+        }
+    } catch (error) {
+        console.error(`Error placing order for user ${id}:`, error);
+    }
+}
 
 //funds and margins
 
