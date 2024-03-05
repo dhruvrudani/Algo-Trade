@@ -49,7 +49,7 @@ const health = (req, res) => {
 };
 
 const bad_gateway = (req, res) => {
-  return res.status(502).json({ status: 502, message: "box Backend API Bad Gateway!" });
+  return res.status(502).json({ status: 502, message: " Algo_Trade Backend API Bad Gateway!" });
 };
 
 app.get('/', health);
