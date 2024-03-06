@@ -21,33 +21,29 @@ const kite = new KiteConnect({
 
 export const kitelogin = async () => {
     try {
+        // Uncomment the following lines in a real application
         // const loginURL = kite.getLoginURL();
         // console.log("Login URL:", loginURL);
-
         // In a real application, you need to redirect the user to loginURL and handle the callback to obtain the requestToken.
 
-        const requestToken = '8Q4laM4L0BLJ2qpdM92LWZ91f6kVLunr';
+        const requestToken = 'vmuuhMMUXtCNkB9ZKD2F155S4WF2sJ2P';
 
         // Generate session using requestToken
-        const response = await kite.generateSession(requestToken, kite.api_key);
+        const response = await kite.generateSession(requestToken, config.get('api_secret'));
 
         console.log('response :>> ', response);
-        // Check if session generation was successful
 
+        // Check if session generation was successful
         const accessToken = response.access_token;
         kite.setAccessToken(accessToken);
 
         // Fetch user profile using the generated session
-
         const data = await kite.getProfile();
-
-
         console.log('user data ', data);
 
         return { data, accessToken };
-
     } catch (error) {
-        console.log("Error in kitelogin:", error);
+        console.log("Error in kitelogin:", error.message);
         throw error;
     }
 };
