@@ -328,10 +328,11 @@ export const tradeHistory = async (req: Request, res: Response) => {
         let historyData = {};
         let alltrade = {};
         let getdata = {};
-        if (body.tradeTime === null) {  
+        if (body.tradeTime === "") {  
             tradeData = await userTrade.find();
+            return res.status(200).json(new apiResponse(200, "trade history", {tradeData},{}));
             console.log('tradeData :>> ', tradeData);
-        } else if (body.tradeTime !== null) {
+        } else if (body.tradeTime !== "") {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
             console.log('tradeData :>> ', tradeData);
         }
@@ -362,14 +363,16 @@ export const subtradeHistory = async (req: Request, res: Response) => {
             tradeData = await userTrade.find();
         } else if (body.tradeTime !== "") {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
+            console.log('tradeData :>> ', tradeData);
         }
 
         for (const e of tradeData) {
-            const userdata = e['trade'];
+            const userdata = e['trade'];console.log('userdata :>> ', userdata);
 
             for (const data of userdata) {
 
                 if (data.user_id == body.id) {
+                    console.log("data",data)
                     const id = data.user_id;
                     if (data.buyKitePrice !== 0 && data.isSelled === false) {
                         const findUserData: any = await userModel.findById({ _id: id });
