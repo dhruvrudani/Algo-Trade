@@ -48,9 +48,10 @@ export const getUser = async (req: Request, res: Response) => {
             }
         }, { new: true })
 
+        
         const connectDetails = await connectHistory.find({ date: customizedTime })
 
-        if (connectDetails) {
+        if (connectDetails === null) {
             const connectData = await connectHistory.findOneAndUpdate(
                 { date: customizedTime },
                 {
@@ -71,6 +72,8 @@ export const getUser = async (req: Request, res: Response) => {
                     loginAt: indiaTime
                 }
             })
+
+            await connectData.save();
         }
         return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
 
