@@ -10,6 +10,7 @@ import { getFundsAndMargins } from "../../helpers/kiteConnect/index";
 import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { kitelogin } from "../test2";
+import { privateEncrypt } from "crypto";
 
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId;
@@ -20,48 +21,92 @@ function generateRandomNumber() {
   return Math.floor(10000 + Math.random() * 90000);
 }
 
-export const buyTradeFunction = async (
-    req: Request,
-    res: Response,
-    userData: any, 
-    body: any, 
-    resultAdminTradeEnter: any, 
-    quantityObj: any 
-  ) => {
-    try {
-      let returnObj;
-      const fundObj = await getFundsAndMargins(
-        userData.access_key,
-        "equity"
-      ).catch((error) => {
-        console.error("Error in getFundsAndMargins:", error);
-        throw error;
-      });
-      console.log(fundObj);
-      const { _id: id, access_key, isKiteLogin } = userData;
-      if (quantityObj) {
-        const { quantity } = quantityObj;
-  
-        if (access_key && isKiteLogin === true) {
-          console.log("😊😊😊😊😊😊");
-          if (body.order_type === "MARKET") {
-            const ex = 1; // Example: change this to retrieve live price function
-            const price = (quantity * ex).toFixed(11);
-            const fund = Number(fundObj["equity"].net.toFixed(11));
-            let buyResponse;
-  
-            if (Number(price) <= fund) {
+export const buyTradeFunction = async (req: Request, res: Response, userData: any, body: any, resultAdminTradeEnter: any, quantityObj: any) => {
+  try {
+    let returnObj;
+    const fundObj = await getFundsAndMargins(
+      userData.access_key,
+      "equity"
+    ).catch((error) => {
+      console.error("Error in getFundsAndMargins:", error);
+      throw error;
+    });
+
+
+    const { _id: id, access_key, isKiteLogin } = userData;
+    if (quantityObj) {
+      const { quantity } = quantityObj;
+
+      if (access_key && isKiteLogin === true) {
+        if (body.order_type === "MARKET") {
+          const ex = 1; // Example: change this to retrieve live price function
+          const price = (quantity * ex).toFixed(11);
+          const fund = Number(fundObj["equity"].net.toFixed(11));
+          let buyResponse;
+
+          if (Number(price) <= fund) {
+            const data: any = {
+              access_key: userData.access_key,
+              id: id,
+              tradingsymbol: body.tradingsymbol,
+              quantity: quantity,
+              exchange: body.exchange,
+              order_type: body.order_type,
+              product: body.product,
+            };
+            buyResponse = await buy(data);
+            console.log(buyResponse);
+            const alluserdata = await userModel.findOneAndUpdate(
+              {
+                _id: userData._id,
+                isActive: true,
+                isDelete: false,
+                isVerified: true,
+              },
+              {
+                $inc: {
+                  totalUsePlan: +1,
+                },
+              },
+              { new: true }
+            );
+
+            const tradeData = getOrderTrades(
+              userData.access_key,
+              buyResponse.order_id
+            );
+            console.log("buy trade function tradeData :>> ", tradeData);
+            await adminTrade.findByIdAndUpdate(
+              { _id: resultAdminTradeEnter._id },
+              { price: tradeData[0]["average_price"] }
+            );
+            returnObj = {
+              user_id: userData._id,
+              tradingsymbol: body.tradingsymbol,
+              buyOrderId: buyResponse.order_id,
+              quantity,
+              isSelled: false,
+              buyKitePrice: tradeData[0]["average_price"],
+              buyAT: indiaTime,
+              accessToken: access_key,
+              lessQuantity: false,
+              buytradeStatus: buyResponse.status,
+            };
+          } else {
+            const updatedQuantity = stockQuantity(quantity, fund, Number(ex));
+
+            if (updatedQuantity > 0) {
               const data: any = {
                 access_key: userData.access_key,
                 id: id,
                 tradingsymbol: body.tradingsymbol,
-                quantity: quantity,
+                quantity: updatedQuantity,
                 exchange: body.exchange,
                 order_type: body.order_type,
                 product: body.product,
               };
-              buyResponse = await buy(data);
-              console.log(buyResponse);
+
+              const buyData = await buy(data);
               const alluserdata = await userModel.findOneAndUpdate(
                 {
                   _id: userData._id,
@@ -76,186 +121,37 @@ export const buyTradeFunction = async (
                 },
                 { new: true }
               );
-  
               const tradeData = getOrderTrades(
                 userData.access_key,
                 buyResponse.order_id
               );
-              console.log("buy trade function tradeData :>> ", tradeData);
-              await adminTrade.findByIdAndUpdate(
-                { _id: resultAdminTradeEnter._id },
-                { price: tradeData["average_price"] }
-              );
+              console.log(alluserdata);
               returnObj = {
                 user_id: userData._id,
                 tradingsymbol: body.tradingsymbol,
-                buyOrderId: buyResponse.order_id,
-                quantity,
+                buyOrderId: buyData.order_id,
+                quantity: updatedQuantity,
                 isSelled: false,
-                buyKitePrice: tradeData["average_price"],
+                buyKitePrice: tradeData[0]['average_price'],
                 buyAT: indiaTime,
                 accessToken: access_key,
-                lessQuantity: false,
-                buytradeStatus: null,
+                lessQuantity: true,
+                buytradeStatus: buyData.status,
               };
             } else {
-              const updatedQuantity = stockQuantity(quantity, fund, Number(ex));
-  
-              if (updatedQuantity > 0) {
-                const data: any = {
-                  access_key: userData.access_key,
-                  id: id,
-                  tradingsymbol: body.tradingsymbol,
-                  quantity: updatedQuantity,
-                  exchange: body.exchange,
-                  order_type: body.order_type,
-                  product: body.product,
-                };
-  
-                const buyData = await buy(data);
-                const alluserdata = await userModel.findOneAndUpdate(
-                  {
-                    _id: userData._id,
-                    isActive: true,
-                    isDelete: false,
-                    isVerified: true,
-                  },
-                  {
-                    $inc: {
-                      totalUsePlan: +1,
-                    },
-                  },
-                  { new: true }
-                );
-                console.log(alluserdata);
-                returnObj = {
-                  user_id: userData._id,
-                  tradingsymbol: body.tradingsymbol,
-                  buyOrderId: buyData.order_id,
-                  quantity: updatedQuantity,
-                  isSelled: false,
-                  buyKitePrice: body.price,
-                  buyAT: indiaTime,
-                  accessToken: access_key,
-                  lessQuantity: true,
-                  buytradeStatus: null,
-                };
-              } else {
-                const price = (quantity * body.price).toFixed(11);
-                const fund = Number(fundObj['equity'].net.toFixed(11));
-                if (access_key && isKiteLogin) {
-  
-                  if (Number(price) <= fund) {
-                    const data: any = {
-                      access_key: userData.access_key,
-                      id: id,
-                      tradingsymbol: body.tradingsymbol,
-                      quantity: quantity,
-                      exchange: body.exchange,
-                      order_type: body.order_type,
-                      product: body.product,
-                      price: body.price
-                    };
-  
-                    const buyData = await buy(data);
-  
-                    const alluserdata = await userModel.findOneAndUpdate(
-                      {
-                        _id: userData._id,
-                        isActive: true,
-                        isDelete: false,
-                        isVerified: true
-                      },
-                      {
-                        $inc: {
-                          totalUsePlan: +1
-                        }
-                      },
-                      { new: true }
-                    );
-                    returnObj = {
-                      user_id: userData._id,
-                      tradingsymbol: body.tradingsymbol,
-                      buyOrderId: buyData.order_id,
-                      quantity,
-                      isSelled: false,
-                      buyKitePrice: body.price,
-                      buyAT: indiaTime,
-                      accessToken: access_key,
-                      lessQuantity: false,
-                      buytradeStatus: null,
-                    };
-                  } else {
-                    const updatedQuantity = stockQuantity(quantity, fund, Number(price));
-  
-                    if (updatedQuantity > 0) {
-                      const data: any = {
-                        access_key: userData.access_key,
-                        id: id,
-                        tradingsymbol: body.tradingsymbol,
-                        quantity: quantity,
-                        exchange: body.exchange,
-                        order_type: body.order_type,
-                        product: body.product
-                      };
-  
-                      const buyData = await buy(data);
-                      const alluserdata = await userModel.findOneAndUpdate(
-                        {
-                          _id: userData._id,
-                          isActive: true,
-                          isDelete: false,
-                          isVerified: true
-                        },
-                        {
-                          $inc: {
-                            totalUsePlan: +1
-                          }
-                        },
-                        { new: true }
-                      );
-                      console.log(alluserdata);
-                      returnObj = {
-                        user_id: userData._id,
-                        tradingsymbol: body.tradingsymbol,
-                        buyOrderId: buyData.order_id,
-                        quantity: updatedQuantity,
-                        isSelled: false,
-                        buyKitePrice: body.price,
-                        buyAT: indiaTime,
-                        accessToken: access_key,
-                        lessQuantity: true,
-                        buytradeStatus: null
-                      };
-                    } else {
-                      returnObj = {
-                        user_id: id,
-                        trade_id: resultAdminTradeEnter._id,
-                        msg: "Insufficient balance",
-                        accessToken: access_key
-                      };
-                    }
-                  }
-                } else if (access_key === null) {
-                  returnObj = {
-                    user_id: id,
-                    trade_id: resultAdminTradeEnter._id,
-                    msg: "user not login",
-                  };
-                }
-              }
+              returnObj = {
+                user_id: id,
+                trade_id: resultAdminTradeEnter._id,
+                msg: "Insufficient balance",
+                accessToken: access_key,
+              };
             }
-          } else {
-            returnObj = {
-              user_id: id,
-              trade_id: resultAdminTradeEnter._id,
-              msg: "Insufficient balance",
-              accessToken: access_key,
-            };
           }
+
         } else {
           const price = (quantity * body.price).toFixed(11);
           const fund = Number(fundObj["equity"].net.toFixed(11));
+          console.log(Number(price) <= fund);
           if (Number(price) <= fund) {
             const data: any = {
               access_key: userData.access_key,
@@ -267,7 +163,7 @@ export const buyTradeFunction = async (
               product: body.product,
               price: body.price,
             };
-  
+
             const buyData = await buy(data);
             console.log("Limit if buyData :>> ", buyData);
             const alluserdata = await userModel.findOneAndUpdate(
@@ -294,7 +190,7 @@ export const buyTradeFunction = async (
               buyAT: indiaTime,
               accessToken: access_key,
               lessQuantity: false,
-              buytradeStatus: null,
+              buytradeStatus: buyData.status,
             };
           } else {
             const updatedQuantity = stockQuantity(
@@ -302,7 +198,7 @@ export const buyTradeFunction = async (
               fund,
               Number(price)
             );
-  
+
             if (updatedQuantity > 0) {
               const data: any = {
                 access_key: userData.access_key,
@@ -313,7 +209,7 @@ export const buyTradeFunction = async (
                 order_type: body.order_type,
                 product: body.product,
               };
-  
+
               const buyData = await buy(data);
               const alluserdata = await userModel.findOneAndUpdate(
                 {
@@ -340,7 +236,7 @@ export const buyTradeFunction = async (
                 buyAT: indiaTime,
                 accessToken: access_key,
                 lessQuantity: true,
-                buytradeStatus: null,
+                buytradeStatus: buyData.status,
               };
             } else {
               returnObj = {
@@ -352,6 +248,7 @@ export const buyTradeFunction = async (
             }
           }
         }
+
       } else if (access_key === null && isKiteLogin === false) {
         returnObj = {
           user_id: id,
@@ -367,72 +264,51 @@ export const buyTradeFunction = async (
         };
       }
       return returnObj;
-    } catch (error) {
-      return error;
     }
-  };
+  } catch (error) {
+    return error;
+  }
+}
 
-export const sellTradeFunction = async (
-  req: Request,
-  res: Response,
-  userdata,
-  body
-) => {
+export const sellTradeFunction = async (req: Request, res: Response, userdata, body) => {
   try {
     let obj;
     const buyTradeData = await userTrade.findOne({ trade_id: body.id });
     if (buyTradeData && buyTradeData.trade_id === body.id) {
       const id = userdata._id;
-      let quantity =
-        (await tradeQuantity.findOne({ user_id: id }))?.quantity || 0;
-
       if (body.order_type === "MARKET") {
-        if (quantity > 0 && userdata.isKiteLogin === true) {
+        if (userdata.isKiteLogin === true) {
           for (const sellData of buyTradeData.trade) {
-            if (
-              String(sellData.user_id) === String(id) &&
-              !sellData.isSelled &&
-              sellData.quantity > 0 &&
-              quantity !== 0 &&
-              sellData.tradingsymbol === body.tradingsymbol
-            ) {
-              quantity -= sellData.quantity;
-              const order_id = sellData.buyOrderId;
-              const random5DigitNumber = generateRandomNumber();
+            if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && sellData.quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
+
               const sellrequireddata: any = {
-                access_key: sellData.access_key,
-                id: id,
+                access_key: sellData.accessToken,
                 tradingsymbol: body.tradingsymbol,
-                quantity: quantity,
+                quantity: sellData.quantity,
                 exchange: body.exchange,
                 order_type: body.order_type,
                 product: body.product,
               };
 
-              await sell(sellrequireddata);
-
-              const profit =
-                Number(sellData.quantity) *
-                  Number(body.sellPrice) *
-                  Number(buyTradeData.loatSize) -
-                Number(sellData.quantity) *
-                  Number(sellData.buyKitePrice) *
-                  Number(buyTradeData.loatSize);
-              console.log(
-                sellData.quantity *
-                  Number(sellData.buyKitePrice) *
-                  Number(buyTradeData.loatSize)
+              const returnSellData = await sell(sellrequireddata);
+              const tradeData = getOrderTrades(
+                sellData.access_key,
+                returnSellData.order_id
               );
+              const order_id = sellData.buyOrderId;
+
+              const profit = Number(sellData.quantity) * Number(tradeData[0]["average_price"]) * Number(buyTradeData.loatSize) - Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize);
+              console.log(sellData.quantity * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
               await userTrade.updateOne(
                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                 {
                   $set: {
                     "trade.$.isSelled": true,
                     "trade.$.sellAt": indiaTime,
-                    "trade.$.sellOrderId": random5DigitNumber,
-                    "trade.$.sellKitePrice": body.sellPrice,
+                    "trade.$.sellOrderId": returnSellData.order_id,
+                    "trade.$.sellKitePrice": tradeData[0]["average_price"],
                     "trade.$.profit": profit,
-                    "trade.$.selltradeStatus": null,
+                    "trade.$.selltradeStatus": returnSellData.status,
                   },
                 }
               );
@@ -450,64 +326,57 @@ export const sellTradeFunction = async (
           }
         }
       }
+      else {
 
-      if (quantity > 0 && userdata.isKiteLogin === true) {
-        for (const sellData of buyTradeData.trade) {
-          if (
-            String(sellData.user_id) === String(id) &&
-            !sellData.isSelled &&
-            sellData.quantity > 0 &&
-            quantity !== 0 &&
-            sellData.tradingsymbol === body.tradingsymbol
-          ) {
-            quantity -= sellData.quantity;
-            const order_id = sellData.buyOrderId;
-            const random5DigitNumber = generateRandomNumber();
-            const sellrequireddata: any = {
-              access_key: sellData.access_key,
-              id: id,
-              tradingsymbol: body.tradingsymbol,
-              quantity: quantity,
-              exchange: body.exchange,
-              order_type: body.order_type,
-              product: body.product,
-            };
-
-            // sell(sellrequireddata);
-
-            const profit =
-              Number(sellData.quantity) *
+        if (userdata.isKiteLogin === true) {
+          for (const sellData of buyTradeData.trade) {
+            console.log(sellData);
+            if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && sellData.quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
+              const sellrequireddata: any = {
+                access_key: sellData.accessToken,
+                tradingsymbol: body.tradingsymbol,
+                quantity: sellData.quantity,
+                exchange: body.exchange,
+                order_type: body.order_type,
+                product: body.product,
+                price: body.price
+              };
+              const returnSellData = await sell(sellrequireddata);
+              const order_id = sellData.buyOrderId;
+              const profit =
+                Number(sellData.quantity) *
                 Number(body.sellPrice) *
                 Number(buyTradeData.loatSize) -
-              Number(sellData.quantity) *
+                Number(sellData.quantity) *
                 Number(sellData.buyKitePrice) *
                 Number(buyTradeData.loatSize);
-            console.log(
-              sellData.quantity *
+              console.log(
+                sellData.quantity *
                 Number(sellData.buyKitePrice) *
                 Number(buyTradeData.loatSize)
-            );
-            await userTrade.updateOne(
-              { "trade.user_id": id, "trade.buyOrderId": order_id },
-              {
-                $set: {
-                  "trade.$.isSelled": true,
-                  "trade.$.sellAt": indiaTime,
-                  "trade.$.sellOrderId": random5DigitNumber,
-                  "trade.$.sellKitePrice": body.sellPrice,
-                  "trade.$.profit": profit,
-                  "trade.$.selltradeStatus": null,
-                },
-              }
-            );
+              );
+              await userTrade.updateOne(
+                { "trade.user_id": id, "trade.buyOrderId": order_id },
+                {
+                  $set: {
+                    "trade.$.isSelled": true,
+                    "trade.$.sellAt": indiaTime,
+                    "trade.$.sellOrderId": returnSellData.order_id,
+                    "trade.$.sellKitePrice": body.sellPrice,
+                    "trade.$.profit": profit,
+                    "trade.$.selltradeStatus": returnSellData.status,
+                  },
+                }
+              );
 
-            const data = await userTrade.findOne({
-              "trade.user_id": id,
-              "trade.buyOrderId": order_id,
-            });
-            for (const tradeData of data.trade) {
-              if (String(tradeData.user_id) === String(id)) {
-                return (obj = tradeData);
+              const data = await userTrade.findOne({
+                "trade.user_id": id,
+                "trade.buyOrderId": order_id,
+              });
+              for (const tradeData of data.trade) {
+                if (String(tradeData.user_id) === String(id)) {
+                  return (obj = tradeData);
+                }
               }
             }
           }

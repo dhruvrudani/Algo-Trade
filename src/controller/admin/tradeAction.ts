@@ -66,6 +66,7 @@ export const buystock = async (req: Request, res: Response) => {
             role: 1,
             $expr: { $lt: ['$totalUsePlan', '$plan'] }
         });
+        console.log(alluserdata);
         const promises = alluserdata.map(async userData => {
             const quantityObj = await tradeQuantity.findOne({ user_id: userData.id });
             return buyTradeFunction(req, res, userData, body, resultAdminTradeEnter, quantityObj);
@@ -105,10 +106,10 @@ export const sellstock = async (req: Request, res: Response) => {
         const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
 
 
+        console.log(alluserdata);
         const promises = alluserdata.map(async userData => {
             return sellTradeFunction(req, res, userData, body);
         })
-
         const userTradeResults = await Promise.all(promises);
         sellUserData = userTradeResults.filter(result => result !== undefined);
 

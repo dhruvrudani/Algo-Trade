@@ -45,7 +45,7 @@ router.get('/getKiteLoginUserData',tradeSummary.getKiteLoginUserDetails)
 router.get('/getKiteNotLoginUserData',tradeSummary.getKiteNotLoginUserDetails)
 
 //update kite link user data
-router.patch('/updateKiteLoginUserData',tradeSummary.updateUserDetailsByAdmin)
+router.post('/updateKiteLoginUserData',tradeSummary.updateUserDetailsByAdmin)
 
 //block kite linked user
 router.post('/blockUser',tradeSummary.blockUserByAdmin)
