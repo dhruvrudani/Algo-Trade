@@ -250,43 +250,66 @@ export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
         const userData = await userModel.findById({ _id: body.id });
+        console.log(userData);
         let updateUserData;
-        if (userData.role === 0) { //admin
+        if (userData !== null) {
 
+            if (userData.role === 0) { //admin
 
-            if (body.usingPassword === false) {
-                updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, usingPassword: false }, { new: true });
-            } else if (body.usingPassword === true) {
+                if (body.usingPassword === false) {
+                    updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, usingPassword: false }, { new: true });
+                } else if (body.usingPassword === true) {
 
-                if (body.password) {
+                    if (body.password) {
 
-                    const bcryptdPassword = await bcrypt.hash(body.password, 10);
-                    if (body.kiteid) {
+                        const bcryptdPassword = await bcrypt.hash(body.password, 10);
+                        if (body.kiteid) {
 
-                        updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, password: bcryptdPassword, usingPassword: true }, { new: true });
+                            updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, z_user_id: body.kiteid, password: bcryptdPassword, usingPassword: true }, { new: true });
+                        } else {
+                            updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, password: bcryptdPassword, usingPassword: true }, { new: true });
+
+                        }
                     } else {
-                        updateUserData = await userModel.findOneAndUpdate({ _id: body.id }, { fullname: body.fullname, email: body.email, password: bcryptdPassword, usingPassword: true }, { new: true });
-
+                        return res.status(401).json(new apiResponse(401, "please set the password", updateUserData, {}));
                     }
-                } else {
-                    return res.status(401).json(new apiResponse(401, "please set the password", updateUserData, {}));
+                }
+                if (updateUserData !== null && updateUserData.length !== 0) {
+                    return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
+                } else if (updateUserData === null) {
+                    return res.status(404).json(new apiResponse(404, "user not found", {}, {}));
+                }
+
+            } else if (userData.role === 1) {
+
+                if (body.block === "block" || body.block === "unblock") {
+                    const userData = await userModel.find({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
+
+                    if (body.block === "block") {//means block user
+                        if (userData) {
+                            const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true }, { isActive: false }, { new: true });
+                            return res.status(200).json(new apiResponse(200, "user block successful", updateUserData, {}));
+                        }
+                    } else if (body.block === "unblock") {
+                        if (userData) {//means unblock user
+                            const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: false, isVerified: true, isKiteLogin: true }, { isActive: true }, { new: true });
+                            return res.status(200).json(new apiResponse(200, "user unblock successful", updateUserData, {}));
+                        }
+                    }
+                }
+                else {
+
+                    updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isKiteLogin: true }, { fullname: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
+
+                    if (updateUserData !== null) {
+                        return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
+                    } else if (updateUserData === null) {
+                        return res.status(404).json(new apiResponse(404, "user not found", {}, {}));
+                    }
                 }
             }
-            if (updateUserData !== null && updateUserData.length !== 0) {
-                return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
-            } else if (updateUserData === null) {
-                return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
-            }
-
-        } else if (userData.role === 1) {
-
-            updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isKiteLogin: true }, { fullname: body.fullname, email: body.email, phoneNumber: body.phoneNumber, location: body.location }, { new: true });
-
-            if (updateUserData !== null) {
-                return res.status(200).json(new apiResponse(200, "user data update successful", updateUserData, {}));
-            } else if (updateUserData === null) {
-                return res.status(404).json(new apiResponse(404, "user not found", updateUserData, {}));
-            }
+        } else {
+            return res.status(200).json(new apiResponse(200, "user not found", {}, {}));
         }
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
@@ -298,19 +321,7 @@ export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
 export const blockUserByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
-        const userData = await userModel.find({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
 
-        if (body.key === 0) {//means block user
-            if (userData) {
-                const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: true, isVerified: true, isKiteLogin: true }, { isActive: false }, { new: true });
-                return res.status(200).json(new apiResponse(200, "user block successful", userData, {}));
-            }
-        } else if (body.key === 1) {
-            if (userData) {//means unblock user
-                const updateUserData = await userModel.findOneAndUpdate({ _id: body.id, isDelete: false, isActive: false, isVerified: true, isKiteLogin: true }, { isActive: true }, { new: true });
-                return res.status(200).json(new apiResponse(200, "user unblock successful", userData, {}));
-            }
-        }
 
 
     } catch (error) {
@@ -322,25 +333,26 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
-    console.log('body :>> ', body,body.tradeTime === "",body.tradeTime !== "");
+    console.log('body :>> ', body, body.tradeTime === "", body.tradeTime !== "");
     try {
+        const page = body.page || 1;
+        const pageSize = 3;
         let tradeData;
         let historyData = {};
         let alltrade = {};
         let getdata = {};
-        if (body.tradeTime === "") {  
-            tradeData = await userTrade.find();
-            return res.status(200).json(new apiResponse(200, "trade history", {tradeData},{}));
-            console.log('tradeData :>> ', tradeData);
-        } else if (body.tradeTime !== "") {
-            tradeData = await userTrade.find({ tradeTime: body.tradeTime });
-            console.log('tradeData :>> ', tradeData);
+        const skip = (page - 1) * pageSize;
+        if (body.tradeTime === null) {
+            tradeData = await userTrade.find().skip(skip).limit(pageSize);
+        } else if (body.tradeTime !== null) {
+            tradeData = await userTrade.find({ tradeTime: body.tradeTime }).skip(skip).limit(pageSize);
         }
         if (tradeData) {
             for (const userData of tradeData) {
-                historyData = await tradeHistoryFun(req, res, userData, historyData,alltrade);
+                historyData = await tradeHistoryFun(req, res, userData, historyData, alltrade);
             }
-            
+
+            console.log(historyData);
             const userTradeResults = Object.values(historyData);
             getdata = userTradeResults.filter(result => result !== undefined);
         }
@@ -359,20 +371,21 @@ export const subtradeHistory = async (req: Request, res: Response) => {
         const alltrade = [];
         let tradeData;
 
-        if (body.tradeTime === "") {
+        if (body.tradeTime === null) {
             tradeData = await userTrade.find();
-        } else if (body.tradeTime !== "") {
+        } else if (body.tradeTime !== null) {
             tradeData = await userTrade.find({ tradeTime: body.tradeTime });
             console.log('tradeData :>> ', tradeData);
         }
 
         for (const e of tradeData) {
-            const userdata = e['trade'];console.log('userdata :>> ', userdata);
+            const userdata = e['trade'];
+            console.log('userdata :>> ', userdata);
 
             for (const data of userdata) {
-
+                console.log(data);
                 if (data.user_id == body.id) {
-                    console.log("data",data)
+                    console.log("data", data)
                     const id = data.user_id;
                     if (data.buyKitePrice !== 0 && data.isSelled === false) {
                         const findUserData: any = await userModel.findById({ _id: id });
@@ -383,7 +396,7 @@ export const subtradeHistory = async (req: Request, res: Response) => {
                                 BuyPrice: data.buyKitePrice,
                                 SellPrice: "-",
                                 BuyStatus: data.buytradeStatus,
-                                SellStatus: "-",    
+                                SellStatus: "-",
                                 profit: "-"
 
                             });
@@ -422,8 +435,8 @@ export const test_1 = async (req: Request, res: Response) => {
         if (!userupdate) {
             return res.status(400).json(new apiResponse(400, "User not found", {}, {}));
         } else {
-            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken,isKiteLogin:true ,req_tok_time:indiaTime});
-            console.log('indiaTime :>> ', indiaTime,updatetoken);
+            const updatetoken = await userModel.findByIdAndUpdate(body.id, { request_token: body.requestToken, isKiteLogin: true, req_tok_time: indiaTime });
+            console.log('indiaTime :>> ', indiaTime, updatetoken);
             return res.status(200).json(new apiResponse(200, "Token updated successfully", {}, {}));
         }
     } catch (error) {
@@ -449,9 +462,9 @@ export const createSHA = async (req: Request, res: Response) => {
     // Create SHA-256 hash
     const checksum = crypto.createHash('sha256').update(data).digest('hex');
 
-    return res.json({ checksum });};
+    return res.json({ checksum });
+};
 
 
 
 
-   

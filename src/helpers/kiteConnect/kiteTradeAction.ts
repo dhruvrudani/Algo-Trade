@@ -45,9 +45,8 @@ export const buy = async (data) => {
 }
 
 export const sell = async (data) => {
-    const { access_key, id, tradingsymbol, quantity, exchange, order_type, product, price } = data;
+    const { access_key, tradingsymbol, quantity, exchange, order_type, product, price } = data;
     kite.setAccessToken(access_key);
-    try {
         // const response = await kite.ltp([tradingsymbol]);
         // const instrumentToken = response[tradingsymbol].instrument_token;
         // Place a market order to buy
@@ -73,9 +72,7 @@ export const sell = async (data) => {
                 price: price
             });
         }
-    } catch (error) {
-        console.error(`Error placing order for user ${id}:`, error);
-    }
+    
 }
 
 //funds and margins
@@ -100,10 +97,5 @@ export const getOrderTrades = async (accessToken, order_id) => {
 
     kite.setAccessToken(accessToken);
 
-    kite.getOrderTrades(order_id)
-        .then(function (response) {
-            return response;
-        }).catch(function (err) {
-            return err;
-        });
+    return await kite.getOrderTrades(order_id);
 }

@@ -18,14 +18,14 @@ let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
 let indiaTime = usTime.toLocaleString('en-US', options)
 
-
+//this function is cacll inside the history function of tradesSummary
 export const tradeHistoryFun = async (req: Request, res: Response, e, historyData, alltrade) => {
     try {
 
 
         for (let j = 0; j < e['trade'].length; j++) {
             const data = e['trade'][j];
-            if (data.isSelled === true) {
+            if (data.isSelled === false) {
                 const key = `${e.tradeTime}_${data.user_id}`;
                 const userData = await userModel.findById(data.user_id);
                 if (Object.keys(alltrade).length !== 0 && alltrade[key]) {
@@ -51,7 +51,6 @@ export const tradeHistoryFun = async (req: Request, res: Response, e, historyDat
                 }
             }
         }
-
         return historyData;
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
