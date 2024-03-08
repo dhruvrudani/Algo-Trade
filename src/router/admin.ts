@@ -1,10 +1,13 @@
-import express from 'express'
-import { userValidation } from '../validation'
-import { tradeAction, userController, tradeSummary } from '../controller'
-import { userJWT } from '../helpers/jwt'
-import { createSHA } from '../controller/admin/tradeSummary'
-const router = express.Router()
-export const userRouter = router
+import express from 'express';
+import { userValidation } from '../validation';
+import { tradeAction, userController, tradeSummary } from '../controller';
+import { userJWT } from '../helpers/jwt';
+import { createSHA } from '../controller/admin/tradeSummary';
+import { test3 } from '../helpers/test3';
+import multer from 'multer';
+
+const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
 
 
 // console.log('"run_adminn_controller"', "run_admin_controller")
@@ -57,5 +60,8 @@ router.post('/tradeHistory',tradeSummary.tradeHistory)
 router.get('/generate-sha256',createSHA)
 
 router.post('/subtradeHistory',tradeSummary.subtradeHistory)
+
+router.post('/csv', upload.single('csvFile'), test3);
+
 
 export const adminRouter = router 
