@@ -1,9 +1,4 @@
-import {
-  adminTrade,
-  userModel,
-  userTrade,
-  tradeQuantity,
-} from "../../database";
+import { adminTrade, userModel, userTrade, tradeQuantity, LastConnectHistory, } from "../../database";
 import fund from "../../helpers/funding.json";
 import { buy, getOrderTrades, sell, stockQuantity } from "../../helpers/index";
 import { getFundsAndMargins } from "../../helpers/kiteConnect/index";
@@ -32,8 +27,9 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
       throw error;
     });
 
-
     const { _id: id, access_key, isKiteLogin } = userData;
+    const lastConnectionDetails = await LastConnectHistory.findOne({ user_id: userData._id });
+    console.log(lastConnectionDetails);
     if (quantityObj) {
       const { quantity } = quantityObj;
 
@@ -91,6 +87,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               accessToken: access_key,
               lessQuantity: false,
               buytradeStatus: buyResponse.status,
+              lastLoginAt: lastConnectionDetails.loginAt,
+              lastLogOutAt: lastConnectionDetails.logoutAt,
             };
           } else {
             const updatedQuantity = stockQuantity(quantity, fund, Number(ex));
@@ -137,6 +135,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
                 accessToken: access_key,
                 lessQuantity: true,
                 buytradeStatus: buyData.status,
+                lastLoginAt: lastConnectionDetails.loginAt,
+                lastLogOutAt: lastConnectionDetails.logoutAt,
               };
             } else {
               returnObj = {
@@ -191,6 +191,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               accessToken: access_key,
               lessQuantity: false,
               buytradeStatus: buyData.status,
+              lastLoginAt: lastConnectionDetails.loginAt,
+              lastLogOutAt: lastConnectionDetails.logoutAt,
             };
           } else {
             const updatedQuantity = stockQuantity(
@@ -237,6 +239,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
                 accessToken: access_key,
                 lessQuantity: true,
                 buytradeStatus: buyData.status,
+                lastLoginAt: lastConnectionDetails.loginAt,
+                lastLogOutAt: lastConnectionDetails.logoutAt,
               };
             } else {
               returnObj = {
@@ -249,18 +253,25 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
           }
         }
 
-      } else if (access_key === null && isKiteLogin === false) {
+      } else if (access_key === null || isKiteLogin === false) {
         returnObj = {
           user_id: id,
           trade_id: resultAdminTradeEnter._id,
+          buytradeStatus: "user not login",
           msg: "user not login",
+          buyAt: indiaTime,
+          lastLoginAt: lastConnectionDetails.loginAt,
+          lastLogOutAt: lastConnectionDetails.logoutAt,
         };
       } else {
         returnObj = {
           user_id: id,
           trade_id: resultAdminTradeEnter._id,
           msg: "user does not set quantity of trade",
+          buytradeStatus: "user does not set quantity of trade",
           accessToken: access_key,
+          lastLoginAt: lastConnectionDetails.loginAt,
+          lastLogOutAt: lastConnectionDetails.logoutAt,
         };
       }
       return returnObj;
@@ -276,9 +287,10 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
     const buyTradeData = await userTrade.findOne({ trade_id: body.id });
     if (buyTradeData && buyTradeData.trade_id === body.id) {
       const id = userdata._id;
+      const lastConnectionDetails = await LastConnectHistory.findOne({ user_id: id });
       if (body.order_type === "MARKET") {
-        if (userdata.isKiteLogin === true) {
-          for (const sellData of buyTradeData.trade) {
+        for (const sellData of buyTradeData.trade) {
+          if (userdata.isKiteLogin === true) {
             if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && sellData.quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
 
               const sellrequireddata: any = {
@@ -309,10 +321,12 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                     "trade.$.sellKitePrice": tradeData[0]["average_price"],
                     "trade.$.profit": profit,
                     "trade.$.selltradeStatus": returnSellData.status,
-                  },
+                    "trade.$.lastLoginAt": lastConnectionDetails.loginAt,
+                    "trade.$.lastLogOutAt": lastConnectionDetails.logoutAt,
+                  }, 
                 }
               );
-
+              await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice: tradeData[0]["average_price"], sellAT: indiaTime, sellOrderId: returnSellData.order_id } });
               const data = await userTrade.findOne({
                 "trade.user_id": id,
                 "trade.buyOrderId": order_id,
@@ -323,13 +337,24 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                 }
               }
             }
+          } else {
+            await userTrade.updateOne(
+              { "trade.user_id": id, "trade.buyOrderId": sellData.buyOrderId },
+              {
+                $set: {
+                  "trade.$.selltradeStatus": "user not login",
+                  "trade.$.sellAt": indiaTime,
+                  "trade.$.lastLoginAt": lastConnectionDetails.loginAt,
+                  "trade.$.lastLogOutAt": lastConnectionDetails.logoutAt,
+                },
+              }
+            );
           }
         }
       }
       else {
-
-        if (userdata.isKiteLogin === true) {
-          for (const sellData of buyTradeData.trade) {
+        for (const sellData of buyTradeData.trade) {
+          if (userdata.isKiteLogin === true) {
             console.log(sellData);
             if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && sellData.quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
               const sellrequireddata: any = {
@@ -350,11 +375,6 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                 Number(sellData.quantity) *
                 Number(sellData.buyKitePrice) *
                 Number(buyTradeData.loatSize);
-              console.log(
-                sellData.quantity *
-                Number(sellData.buyKitePrice) *
-                Number(buyTradeData.loatSize)
-              );
               await userTrade.updateOne(
                 { "trade.user_id": id, "trade.buyOrderId": order_id },
                 {
@@ -365,10 +385,13 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                     "trade.$.sellKitePrice": body.sellPrice,
                     "trade.$.profit": profit,
                     "trade.$.selltradeStatus": returnSellData.status,
+                    "trade.$.lastLoginAt": lastConnectionDetails.loginAt,
+                    "trade.$.lastLogOutAt": lastConnectionDetails.logoutAt,
                   },
                 }
               );
 
+              await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice: body.sellPrice, sellAT: indiaTime, sellOrderId: returnSellData.order_id } });
               const data = await userTrade.findOne({
                 "trade.user_id": id,
                 "trade.buyOrderId": order_id,
@@ -379,6 +402,18 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                 }
               }
             }
+          } else {
+            await userTrade.updateOne(
+              { "trade.user_id": id, "trade.buyOrderId": sellData.buyOrderId },
+              {
+                $set: {
+                  "trade.$.selltradeStatus": "user not login",
+                  "trade.$.sellAt": indiaTime,
+                  "trade.$.lastLoginAt": lastConnectionDetails.loginAt,
+                  "trade.$.lastLogOutAt": lastConnectionDetails.logoutAt,
+                },
+              }
+            );
           }
         }
       }

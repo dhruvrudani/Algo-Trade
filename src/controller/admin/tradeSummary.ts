@@ -228,6 +228,52 @@ export const getKiteLoginUserDetails = async (req: Request, res: Response) => {
     }
 }
 
+
+//API of unlinked user history details
+
+export const getUnlinkUserHistory = async (req: Request, res: Response) => {
+    try {
+        const body = req.body;
+        const userdata = await userModel.findById({ _id: body.id });
+        let responseData = [];
+
+        if (userdata) {
+            const userTradeData = await userTrade.find();
+            if (userTradeData) {
+                userTradeData.forEach((e) => {
+                    e['trade'].forEach((data) => {
+
+                        if (data.msg == "user not login" && String(data.user_id) === String(body.id) && !data.buyOrderId) {
+                            if (data.buytradeStatus == "user not login") {
+                                responseData.push({
+                                    date: e.tradeTime,
+                                    index: e.tradingsymbol,
+                                    transaction_type: "BUY",
+                                    reason: data.msg,
+                                    linkTime : data.lastLoginAt,
+                                    unlinkTime : data.lastLogOutAt,
+                                })
+                            } else {
+                                responseData.push({
+                                    date: e.tradeTime,
+                                    index: e.tradingsymbol,
+                                    transaction_type: "SELL",
+                                    reason: data.msg
+                                })
+                            }
+                        }
+                    })
+                })
+            }
+            return res.status(200).json(new apiResponse(200, "unliked user data", responseData, {}))
+        } else {
+            return res.status(402).json(new apiResponse(402, "User Not found", {}, {}));
+        }
+    } catch (error) {
+        return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+    }
+}
+
 //API of get kite not login user details
 
 export const getKiteNotLoginUserDetails = async (req: Request, res: Response) => {
@@ -321,6 +367,8 @@ export const updateUserDetailsByAdmin = async (req: Request, res: Response) => {
 export const blockUserByAdmin = async (req: Request, res: Response) => {
     try {
         const body = req.body;
+
+
 
 
 
@@ -450,7 +498,7 @@ import crypto from 'crypto'
 
 export const createSHA = async (req: Request, res: Response) => {
     const { apiKey, apiSecret, requestToken } = req.body;
-    kitelogin();
+    // kitelogin();
 
     if (!apiKey || !apiSecret || !requestToken) {
         return res.status(400).json({ error: 'Missing required parameters' });
