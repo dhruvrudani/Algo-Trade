@@ -21,8 +21,6 @@ let indiaTime = usTime.toLocaleString('en-US', options)
 //this function is cacll inside the history function of tradesSummary
 export const tradeHistoryFun = async (req: Request, res: Response, e, historyData, alltrade) => {
     try {
-
-
         for (let j = 0; j < e['trade'].length; j++) {
             const data = e['trade'][j];
             if (data.isSelled === false) {

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 const userTradeSchema = new mongoose.Schema({
     trade_id: { type: String, default: null },
+    tradingsymbol: { type: String, default: null },
     stockName: { type: String, default: null },
     loatSize: { type: Number, default: null },
     tradeTime: { type: String, default: null },

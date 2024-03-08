@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import { ObjectId } from 'mongoose';
 import util from 'util';
+import { userModel } from "../../database";
 
 // const jsondata = data;
 // const funddata = fund;
@@ -19,17 +20,18 @@ const kite = new KiteConnect({
 
 //kite login API
 
-export const kitelogin = async () => {
+export const kitelogin = async (id) => {
     try {
         // Uncomment the following lines in a real application
         // const loginURL = kite.getLoginURL();
         // console.log("Login URL:", loginURL);
         // In a real application, you need to redirect the user to loginURL and handle the callback to obtain the requestToken.
 
-        const requestToken = 'vmuuhMMUXtCNkB9ZKD2F155S4WF2sJ2P';
+        const requestToken = await userModel.findById(id, { _id: 0, request_token: 1 });
 
+        console.log("😄😄😄😄😄😄",requestToken);
         // Generate session using requestToken
-        const response = await kite.generateSession(requestToken, config.get('api_secret'));
+        const response = await kite.generateSession(requestToken.request_token, config.get('api_secret'));
 
         console.log('response :>> ', response);
 
