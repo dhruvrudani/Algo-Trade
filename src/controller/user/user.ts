@@ -1,6 +1,6 @@
 import { KiteConnect } from "kiteconnect";
 import config from "config";
-import { userModel, connectHistory } from "../../database";
+import { userModel, connectHistory, LastConnectHistory } from "../../database";
 import { apiResponse } from "../../common";
 import { responseMessage } from "../../helpers/response";
 import { kitelogin } from "../../helpers/kiteConnect/index";
@@ -25,8 +25,8 @@ export const getUser = async (req: Request, res: Response) => {
         let indiaTime = buyAT.toLocaleString('en-US', options);
         const customizedTime = buyAT.toLocaleDateString('en-US', options);
 
-        const { data, accessToken } = await kitelogin()
         const body = req.body;
+        const { data, accessToken } = await kitelogin(body.id);
         const userdata = await userModel.findOneAndUpdate({
             _id: body.id,
             isActive: true, isDelete: false, isVerified: true
@@ -48,10 +48,10 @@ export const getUser = async (req: Request, res: Response) => {
             }
         }, { new: true })
 
-        
-        const connectDetails = await connectHistory.find({ date: customizedTime })
 
-        if (connectDetails === null) {
+        const connectDetails = await connectHistory.find({ date: customizedTime })
+        const lastConnectDetails = await LastConnectHistory.find({ user_id: body.id })
+        if (connectDetails.length !== 0) {
             const connectData = await connectHistory.findOneAndUpdate(
                 { date: customizedTime },
                 {
@@ -62,8 +62,9 @@ export const getUser = async (req: Request, res: Response) => {
                         }
                     }
                 },
-                { new: true } // This option returns the modified document
+                { new: true }
             );
+
         } else {
             const connectData = new connectHistory({
                 date: customizedTime,
@@ -72,8 +73,24 @@ export const getUser = async (req: Request, res: Response) => {
                     loginAt: indiaTime
                 }
             })
-
             await connectData.save();
+        }
+        if (lastConnectDetails.length !== 0) {
+            await LastConnectHistory.findOneAndUpdate(
+                { user_id: body.id },
+                {
+                    loginAt: indiaTime
+                },
+                { new: true }
+            );
+        } else {
+            const lastConnectData = new LastConnectHistory(
+                {
+                    user_id: body.id,
+                    loginAt: indiaTime
+                }
+            );
+            await lastConnectData.save();
         }
         return res.status(200).json(new apiResponse(200, "kite data added successfully", userdata, {}));
 
@@ -98,8 +115,9 @@ export const kitelogout = async (req: Request, res: Response) => {
         if (userData.isKiteLogin === true && userData.isActive === true && userData.isDelete === false && userData.isVerified === true) {
             const userData = await userModel.findByIdAndUpdate({ _id: body.id }, { isKiteLogin: false }, { new: true });
 
+            const lastConnectDetails = await LastConnectHistory.find({ user_id: body.id })
             const connectDetails = await connectHistory.find({ date: customizedTime })
-            if (connectDetails) {
+            if (connectDetails.length !== 0) {
                 const connectData = await connectHistory.findOneAndUpdate(
                     { date: customizedTime },
                     {
@@ -110,7 +128,7 @@ export const kitelogout = async (req: Request, res: Response) => {
                             }
                         }
                     },
-                    { new: true } // This option returns the modified document
+                    { new: true }
                 );
             } else {
                 const connectData = new connectHistory({
@@ -120,6 +138,24 @@ export const kitelogout = async (req: Request, res: Response) => {
                         logoutAt: indiaTime
                     }
                 })
+            }
+
+            if (lastConnectDetails.length !== 0) {
+                await LastConnectHistory.findOneAndUpdate(
+                    { user_id: body.id },
+                    {
+                        logoutAt: indiaTime,
+                    },
+                    { new: true }
+                );
+            } else {
+                const lastConnectData = new LastConnectHistory(
+                    {
+                        user_id: body.id,
+                        logoutAt: indiaTime
+                    }
+                );
+                await lastConnectData.save();
             }
             return res.status(200).json(new apiResponse(200, "kite logout is successfully", userData, {}));
         } else if (userData.isKiteLogin === false) {

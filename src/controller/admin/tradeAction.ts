@@ -5,7 +5,7 @@ import { apiResponse } from "../../common";
 
 import fund from "../../helpers/funding.json";
 import { responseMessage, stockQuantity } from "../../helpers/index";
-import { getFundsAndMargins, buyTradeFunction, sellTradeFunction ,getOrderTrades} from "../../helpers/kiteConnect/index";
+import { getFundsAndMargins, buyTradeFunction, sellTradeFunction, getOrderTrades } from "../../helpers/kiteConnect/index";
 import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
@@ -79,7 +79,7 @@ export const buystock = async (req: Request, res: Response) => {
         const insertdata = new userTrade(
             {
                 trade_id: resultAdminTradeEnter._id,
-                stockName: body.StockName,
+                tradingsymbol: body.tradingsymbol,
                 loatSize: body.LoatSize,
                 tradeTime: customizedTime,
                 trade: userTradeEnter,
@@ -100,13 +100,12 @@ export const sellstock = async (req: Request, res: Response) => {
         const { id, sellPrice, tradingsymbol } = req.body;
         const body = req.body;
         const buyTradeData = await userTrade.findOne({ trade_id: id });
-        const random5DigitNumber = generateRandomNumber();
-        const updateAdminTrade = await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellOrderId: random5DigitNumber, sellAT: indiaTime } });
+       
+        await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice,sellAT: indiaTime } });
         let sellUserData = [];
         const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
 
 
-        console.log(alluserdata);
         const promises = alluserdata.map(async userData => {
             return sellTradeFunction(req, res, userData, body);
         })

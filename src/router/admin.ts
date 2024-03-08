@@ -41,6 +41,8 @@ router.get('/total_investment',tradeSummary.totalInverstment)
 //get trade current market value
 router.get('/market_value',tradeSummary.marketValue)
 
+router.get('/unlinkUserHistory',tradeSummary.getUnlinkUserHistory)
+
 //get kite login user data
 router.get('/getKiteLoginUserData',tradeSummary.getKiteLoginUserDetails)
 
