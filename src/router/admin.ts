@@ -5,6 +5,7 @@ import { userJWT } from '../helpers/jwt';
 import { createSHA } from '../controller/admin/tradeSummary';
 import { test3 } from '../helpers/test3';
 import multer from 'multer';
+import { passwordOrOtp } from '../controller/admin/admin';
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -62,5 +63,6 @@ router.get('/generate-sha256',createSHA)
 
 router.post('/csv', upload.single('csvFile'), test3);
 
+router.get('/Check_password',passwordOrOtp)
 
 export const adminRouter = router 
