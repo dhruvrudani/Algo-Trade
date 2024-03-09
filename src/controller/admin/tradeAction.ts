@@ -58,7 +58,7 @@ export const buystock = async (req: Request, res: Response) => {
         }
 
         const resultAdminTradeEnter = await adminTradeEnter.save();
-
+        console.log(resultAdminTradeEnter);
         const alluserdata = await userModel.find({
             isActive: true,
             isDelete: false,
@@ -78,7 +78,7 @@ export const buystock = async (req: Request, res: Response) => {
         const customizedTime = usTime.toLocaleDateString('en-US', options);
         const insertdata = new userTrade(
             {
-                trade_id: resultAdminTradeEnter._id,
+                trade_id: new ObjectId(resultAdminTradeEnter._id),
                 tradingsymbol: body.tradingsymbol,
                 loatSize: body.LoatSize,
                 tradeTime: customizedTime,
@@ -100,8 +100,8 @@ export const sellstock = async (req: Request, res: Response) => {
         const { id, sellPrice, tradingsymbol } = req.body;
         const body = req.body;
         const buyTradeData = await userTrade.findOne({ trade_id: id });
-       
-        await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice,sellAT: indiaTime } });
+
+        await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice, sellAT: indiaTime } });
         let sellUserData = [];
         const alluserdata = await userModel.find({ isActive: true, isDelete: false, isVerified: true });
 

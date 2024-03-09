@@ -29,7 +29,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
 
     const { _id: id, access_key, isKiteLogin } = userData;
     const lastConnectionDetails = await LastConnectHistory.findOne({ user_id: userData._id });
-    console.log(lastConnectionDetails);
     if (quantityObj) {
       const { quantity } = quantityObj;
 
@@ -51,7 +50,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               product: body.product,
             };
             buyResponse = await buy(data);
-            console.log(buyResponse);
             const alluserdata = await userModel.findOneAndUpdate(
               {
                 _id: userData._id,
@@ -71,13 +69,12 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               userData.access_key,
               buyResponse.order_id
             );
-            console.log("buy trade function tradeData :>> ", tradeData);
             await adminTrade.findByIdAndUpdate(
               { _id: resultAdminTradeEnter._id },
               { price: tradeData[0]["average_price"] }
             );
             returnObj = {
-              user_id: userData._id,
+              user_id: new ObjectId(userData._id),
               tradingsymbol: body.tradingsymbol,
               buyOrderId: buyResponse.order_id,
               quantity,
@@ -123,9 +120,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
                 userData.access_key,
                 buyResponse.order_id
               );
-              console.log(alluserdata);
               returnObj = {
-                user_id: userData._id,
+                user_id: new ObjectId(userData._id),
                 tradingsymbol: body.tradingsymbol,
                 buyOrderId: buyData.order_id,
                 quantity: updatedQuantity,
@@ -140,8 +136,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               };
             } else {
               returnObj = {
-                user_id: id,
-                trade_id: resultAdminTradeEnter._id,
+                user_id: new ObjectId(id),
+                trade_id: new ObjectId(resultAdminTradeEnter._id),
                 msg: "Insufficient balance",
                 accessToken: access_key,
               };
@@ -151,7 +147,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
         } else {
           const price = (quantity * body.price).toFixed(11);
           const fund = Number(fundObj["equity"].net.toFixed(11));
-          console.log(Number(price) <= fund);
           if (Number(price) <= fund) {
             const data: any = {
               access_key: userData.access_key,
@@ -165,7 +160,6 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
             };
 
             const buyData = await buy(data);
-            console.log("Limit if buyData :>> ", buyData);
             const alluserdata = await userModel.findOneAndUpdate(
               {
                 _id: userData._id,
@@ -181,7 +175,7 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               { new: true }
             );
             returnObj = {
-              user_id: userData._id,
+              user_id: new ObjectId(userData._id),
               tradingsymbol: body.tradingsymbol,
               buyOrderId: buyData.order_id,
               quantity,
@@ -227,9 +221,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
                 },
                 { new: true }
               );
-              console.log(alluserdata);
               returnObj = {
-                user_id: userData._id,
+                user_id: new ObjectId(userData._id),
                 tradingsymbol: body.tradingsymbol,
                 buyOrderId: buyData.order_id,
                 quantity: updatedQuantity,
@@ -244,8 +237,8 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
               };
             } else {
               returnObj = {
-                user_id: id,
-                trade_id: resultAdminTradeEnter._id,
+                user_id: new ObjectId(id),
+                trade_id: new ObjectId(resultAdminTradeEnter._id),
                 msg: "Insufficient balance",
                 accessToken: access_key,
               };
@@ -255,27 +248,27 @@ export const buyTradeFunction = async (req: Request, res: Response, userData: an
 
       } else if (access_key === null || isKiteLogin === false) {
         returnObj = {
-          user_id: id,
-          trade_id: resultAdminTradeEnter._id,
+          user_id: new ObjectId(id),
+          trade_id: new ObjectId(resultAdminTradeEnter._id),
           buytradeStatus: "user not login",
           msg: "user not login",
           buyAt: indiaTime,
           lastLoginAt: lastConnectionDetails.loginAt,
           lastLogOutAt: lastConnectionDetails.logoutAt,
         };
-      } else {
-        returnObj = {
-          user_id: id,
-          trade_id: resultAdminTradeEnter._id,
-          msg: "user does not set quantity of trade",
-          buytradeStatus: "user does not set quantity of trade",
-          accessToken: access_key,
-          lastLoginAt: lastConnectionDetails.loginAt,
-          lastLogOutAt: lastConnectionDetails.logoutAt,
-        };
-      }
-      return returnObj;
+      } 
+    }else {
+      returnObj = {
+        user_id: new ObjectId(id),
+        trade_id: new ObjectId(resultAdminTradeEnter._id),
+        msg: "user does not set quantity of trade",
+        buytradeStatus: "user does not set quantity of trade",
+        accessToken: access_key,
+        lastLoginAt: lastConnectionDetails.loginAt,
+        lastLogOutAt: lastConnectionDetails.logoutAt,
+      };
     }
+    return returnObj;
   } catch (error) {
     return error;
   }
@@ -285,7 +278,7 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
   try {
     let obj;
     const buyTradeData = await userTrade.findOne({ trade_id: body.id });
-    if (buyTradeData && buyTradeData.trade_id === body.id) {
+    if (buyTradeData && String(buyTradeData.trade_id) === String(body.id)) {
       const id = userdata._id;
       const lastConnectionDetails = await LastConnectHistory.findOne({ user_id: id });
       if (body.order_type === "MARKET") {
@@ -310,9 +303,9 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
               const order_id = sellData.buyOrderId;
 
               const profit = Number(sellData.quantity) * Number(tradeData[0]["average_price"]) * Number(buyTradeData.loatSize) - Number(sellData.quantity) * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize);
-              console.log(sellData.quantity * Number(sellData.buyKitePrice) * Number(buyTradeData.loatSize));
+             
               await userTrade.updateOne(
-                { "trade.user_id": id, "trade.buyOrderId": order_id },
+                { "trade.user_id": new ObjectId(id), "trade.buyOrderId": order_id },
                 {
                   $set: {
                     "trade.$.isSelled": true,
@@ -323,7 +316,7 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                     "trade.$.selltradeStatus": returnSellData.status,
                     "trade.$.lastLoginAt": lastConnectionDetails.loginAt,
                     "trade.$.lastLogOutAt": lastConnectionDetails.logoutAt,
-                  }, 
+                  },
                 }
               );
               await adminTrade.findOneAndUpdate({ _id: id }, { $set: { sellPrice: tradeData[0]["average_price"], sellAT: indiaTime, sellOrderId: returnSellData.order_id } });
@@ -333,6 +326,7 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
               });
               for (const tradeData of data.trade) {
                 if (String(tradeData.user_id) === String(id)) {
+                  console.log(tradeData);
                   return (obj = tradeData);
                 }
               }
@@ -355,7 +349,6 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
       else {
         for (const sellData of buyTradeData.trade) {
           if (userdata.isKiteLogin === true) {
-            console.log(sellData);
             if (String(sellData.user_id) === String(id) && !sellData.isSelled && sellData.quantity > 0 && sellData.quantity !== 0 && sellData.tradingsymbol === body.tradingsymbol) {
               const sellrequireddata: any = {
                 access_key: sellData.accessToken,
@@ -364,7 +357,7 @@ export const sellTradeFunction = async (req: Request, res: Response, userdata, b
                 exchange: body.exchange,
                 order_type: body.order_type,
                 product: body.product,
-                price: body.price
+                price: body.sellPrice
               };
               const returnSellData = await sell(sellrequireddata);
               const order_id = sellData.buyOrderId;
