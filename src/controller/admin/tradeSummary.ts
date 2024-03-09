@@ -89,7 +89,7 @@ export const user_trade_get = async (req: Request, res: Response) => {
     let body = req.body;
     try {
         const alltrade = [];
-        if (body.type === 1 && body.id !== null) { //user
+        if (body.type === 1 && body.id !== null) { //only user data 
             const tradedata = await userTrade.find();
             tradedata.forEach(data => {
                 let e = data.trade
