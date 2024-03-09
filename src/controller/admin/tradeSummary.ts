@@ -1,22 +1,11 @@
-import { KiteConnect } from "kiteconnect";
-import config from "config";
 import { adminTrade, userModel, userTrade, tradeQuantity } from "../../database";
-import { tradeHistoryFun } from "../../helpers/kiteConnect/index";
-
+import { tradeHistoryFun, userProfitAndLossData } from "../../helpers/kiteConnect/index";
 import { apiResponse } from "../../common";
 import fund from "../../helpers/funding.json";
 import { responseMessage } from "../../helpers/response";
-import { stockQuantity } from "../../helpers/testing";
-import { encryptData } from "../../common/encryptDecrypt";
 import mongoose from "mongoose";
 import { Request, Response } from 'express'
-import jwt from "jsonwebtoken";
-import { builtinModules, findSourceMap } from "module";
-import { kitelogin, sendEmailHelper } from "../../helpers";
-import bodyParser from "body-parser";
 import bcrypt from "bcryptjs";
-import { create } from "domain";
-const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
 let usTime = new Date()
 let options = { timeZone: 'Asia/kolkata', hour12: false }
@@ -186,8 +175,8 @@ export const totalInverstment = async (req: Request, res: Response) => {
                         invested = invested + (data.buyKitePrice * data.quantity);
                     }
                 })
-                console.log(invested)
-                totalinvested = invested * e.loatSize
+                totalinvested = invested * (e.loatSize || 1)
+                console.log(totalinvested)
             })
         }
         return res.status(200).json(new apiResponse(200, "data of total investment", { totalinvested }, {}));
@@ -214,20 +203,74 @@ export const marketValue = async (req: Request, res: Response) => {
 
 //API of get kite login user details
 
+// export const getKiteLoginUserDetails = async (req: Request, res: Response) => {
+//     try {
+//         let userdata:any = await userModel.find({ isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
+
+//         if (userdata && userdata.length > 0) {
+//             userdata.testing = "1"
+//             const buyTradeData = await userTrade.find();
+//             let promises = userdata.map(async e => {
+//                 const profit = await userProfitAndLossData(req, res, e, buyTradeData);
+
+//                 return profit
+//             });
+
+//             // Wait for all promises to be resolved
+//             const updatedUserData = await Promise.all(promises);
+//             console.log("😃😃😃😃😃😃😃😃",updatedUserData);
+
+//             // Now updatedUserData contains the updated userData with the "profit" key
+//             return res.status(200).json(new apiResponse(200, "login user data", updatedUserData, {}));
+//         } else {
+//             return res.status(200).json(new apiResponse(200, "Any user does not login", {}, {}));
+//         }
+//     } catch (error) {
+//         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+//     }
+
+// }
+
+
 export const getKiteLoginUserDetails = async (req: Request, res: Response) => {
     try {
-        const userdata = await userModel.find({ isDelete: false, isActive: true, isVerified: true, isKiteLogin: true });
 
-        if (userdata) {
-            return res.status(200).json(new apiResponse(200, "login user data", userdata, {}));
-        } else {
-            return res.status(200).json(new apiResponse(200, "Any user does not login", {}, {}));
+        let returnData;
+        let data;
+
+        let userData = await userModel.find({}, { fullname: 1, email: 1, z_user_id: 1, plan: 1, phoneNumber: 1, isActive: 1 });
+        console.log(userData);
+
+        if (userData) {
+
+            data = await userTrade.aggregate([
+                {
+                    $unwind: '$trade'
+                },
+                {
+                    $group: {
+                        _id: '$trade.user_id',
+                        totalProfit: { $sum: '$trade.profit' },
+                    }
+                }
+            ])
+            returnData = data.map(data => {
+                let user = userData.find(user => String(user._id) == data._id);
+
+
+                return { user, data }
+            });
+
+            return res.status(200).json(new apiResponse(200, "login user data", returnData, {}));
         }
+
+        return res.status(404).json(new apiResponse(402, "no any user login", {}, {}));
+
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
-}
 
+}
 
 //API of unlinked user history details
 
@@ -250,8 +293,8 @@ export const getUnlinkUserHistory = async (req: Request, res: Response) => {
                                     index: e.tradingsymbol,
                                     transaction_type: "BUY",
                                     reason: data.msg,
-                                    linkTime : data.lastLoginAt,
-                                    unlinkTime : data.lastLogOutAt,
+                                    linkTime: data.lastLoginAt,
+                                    unlinkTime: data.lastLogOutAt,
                                 })
                             } else {
                                 responseData.push({
@@ -379,32 +422,103 @@ export const blockUserByAdmin = async (req: Request, res: Response) => {
 
 //API of trade history
 
+// export const tradeHistory = async (req: Request, res: Response) => {
+//     const body = req.body;
+//     console.log('body :>> ', body, body.tradeTime === "", body.tradeTime !== "");
+//     try {
+//         const page = body.page || 1;
+//         const pageSize = 3;
+//         let tradeData;
+//         let historyData = {};
+//         let alltrade = {};
+//         let getdata = {};
+//         const skip = (page - 1) * pageSize;
+//         if (body.tradeTime === null) {
+//             tradeData = await userTrade.find().skip(skip).limit(pageSize);
+//         } else if (body.tradeTime !== null) {
+//             tradeData = await userTrade.find({ tradeTime: body.tradeTime }).skip(skip).limit(pageSize);
+//         }
+//         if (tradeData) {
+//             for (const userData of tradeData) {
+//                 historyData = await tradeHistoryFun(req, res, userData, historyData, alltrade);
+//             }
+
+//             console.log(tradeData);
+//             const userTradeResults = Object.values(historyData);
+//             getdata = userTradeResults.filter(result => result !== undefined);
+//         }
+//         return res.status(200).json(new apiResponse(200, "trade history", { getdata }, {}));
+//     } catch (error) {
+//         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
+//     }
+// };
+
+
 export const tradeHistory = async (req: Request, res: Response) => {
     const body = req.body;
     console.log('body :>> ', body, body.tradeTime === "", body.tradeTime !== "");
     try {
         const page = body.page || 1;
-        const pageSize = 3;
-        let tradeData;
-        let historyData = {};
-        let alltrade = {};
-        let getdata = {};
+        const pageSize = 10;
+        let returnData;
+        let data;
         const skip = (page - 1) * pageSize;
+        let userData = await userModel.find({}, { fullname: 1, email: 1, z_user_id: 1 });
+        console.log(userData);
         if (body.tradeTime === null) {
-            tradeData = await userTrade.find().skip(skip).limit(pageSize);
-        } else if (body.tradeTime !== null) {
-            tradeData = await userTrade.find({ tradeTime: body.tradeTime }).skip(skip).limit(pageSize);
-        }
-        if (tradeData) {
-            for (const userData of tradeData) {
-                historyData = await tradeHistoryFun(req, res, userData, historyData, alltrade);
-            }
 
-            console.log(historyData);
-            const userTradeResults = Object.values(historyData);
-            getdata = userTradeResults.filter(result => result !== undefined);
+            data = await userTrade.aggregate([
+                {
+                    $unwind: '$trade'
+                },
+                {
+                    $group: {
+                        _id: '$trade.user_id',
+                        totalProfit: { $sum: '$trade.profit' },
+                    }
+                }, {
+                    $skip: skip
+                },
+                {
+                    $limit: pageSize
+                }
+
+            ])
+            returnData = data.map(data => {
+                let user = userData.find(user => String(user._id) == data._id);
+
+
+                return { user, data }
+            });
+
+        } else if (body.tradeTime !== null) {
+            data = await userTrade.aggregate([
+                {
+                    $unwind: '$trade'
+                },
+                {
+                    $match: {
+                        'tradeTime': body.tradeTime
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$trade.user_id',
+                        totalProfit: { $sum: '$trade.profit' },
+                    }
+                }, {
+                    $skip: skip
+                },
+                {
+                    $limit: pageSize
+                }
+            ])
+            returnData = data.map(data => {
+                let user = userData.find(user => String(user._id) == data._id);
+                return { user, data }
+            });
         }
-        return res.status(200).json(new apiResponse(200, "trade history", { getdata }, {}));
+        return res.status(200).json(new apiResponse(200, "trade history", { returnData }, {}));
     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
@@ -464,7 +578,7 @@ export const subtradeHistory = async (req: Request, res: Response) => {
                             });
                         }
                     }
-                }
+                } []
 
 
             }
@@ -494,6 +608,7 @@ export const test_1 = async (req: Request, res: Response) => {
 };
 
 import crypto from 'crypto'
+import bodyParser from "body-parser";
 
 
 export const createSHA = async (req: Request, res: Response) => {
