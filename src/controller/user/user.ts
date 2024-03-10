@@ -50,6 +50,7 @@ export const getUser = async (req: Request, res: Response) => {
 
 
         const connectDetails = await connectHistory.find({ date: customizedTime })
+        console.log(connectDetails);
         const lastConnectDetails = await LastConnectHistory.find({ user_id: body.id })
         if (connectDetails.length !== 0) {
             const connectData = await connectHistory.findOneAndUpdate(
@@ -57,7 +58,7 @@ export const getUser = async (req: Request, res: Response) => {
                 {
                     $push: {
                         'details': {
-                            user_id: body.id,
+                            user_id: new ObjectId(body.id),
                             loginAt: indiaTime
                         }
                     }
@@ -69,7 +70,7 @@ export const getUser = async (req: Request, res: Response) => {
             const connectData = new connectHistory({
                 date: customizedTime,
                 details: {
-                    user_id: body.id,
+                    user_id: new ObjectId(body.id),
                     loginAt: indiaTime
                 }
             })
@@ -86,7 +87,7 @@ export const getUser = async (req: Request, res: Response) => {
         } else {
             const lastConnectData = new LastConnectHistory(
                 {
-                    user_id: body.id,
+                    user_id: new ObjectId(body.id),
                     loginAt: indiaTime
                 }
             );
@@ -123,7 +124,7 @@ export const kitelogout = async (req: Request, res: Response) => {
                     {
                         $push: {
                             'details': {
-                                user_id: body.id,
+                                user_id: new ObjectId(body.id),
                                 logoutAt: indiaTime
                             }
                         }
@@ -134,7 +135,7 @@ export const kitelogout = async (req: Request, res: Response) => {
                 const connectData = new connectHistory({
                     date: customizedTime,
                     details: {
-                        user_id: body.id,
+                        user_id: new ObjectId(body.id),
                         logoutAt: indiaTime
                     }
                 })
@@ -142,7 +143,7 @@ export const kitelogout = async (req: Request, res: Response) => {
 
             if (lastConnectDetails.length !== 0) {
                 await LastConnectHistory.findOneAndUpdate(
-                    { user_id: body.id },
+                    { user_id: new ObjectId(body.id) },
                     {
                         logoutAt: indiaTime,
                     },
@@ -151,7 +152,7 @@ export const kitelogout = async (req: Request, res: Response) => {
             } else {
                 const lastConnectData = new LastConnectHistory(
                     {
-                        user_id: body.id,
+                        user_id: new ObjectId(body.id),
                         logoutAt: indiaTime
                     }
                 );

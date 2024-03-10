@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
 let buyAT = new Date();
 let options = { timeZone: 'Asia/Kolkata', hour12: false };

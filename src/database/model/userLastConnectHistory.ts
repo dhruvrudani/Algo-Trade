@@ -5,7 +5,7 @@ let indiaTime = buyAT.toLocaleString('en-US', options);
 console.log('👻👻indianTime', indiaTime)
 
 const lastConnectHistoryData = new mongoose.Schema({
-    user_id: { type: String, default: null },
+    user_id: { type: mongoose.Schema.Types.ObjectId, default: null },
     loginAt: { type: String, default: null },
     logoutAt: { type: String, default: null }
 })
