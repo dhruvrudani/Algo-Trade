@@ -18,7 +18,10 @@ export const passwordOrOtp = async (req: Request, res: Response)=>{
     try {
         const role=1
         const result = await userModel.findOne({role:role}) 
-        return res.status(200).json(new apiResponse(200, "data Share successfully", result.usingPassword, {}));
+        const data = {
+            password: result.usingPassword
+        }
+        return res.status(200).json(new apiResponse(200, "data Share successfully", data, {}));
         } catch (error) {
         
     }
