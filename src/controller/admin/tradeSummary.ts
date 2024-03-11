@@ -824,35 +824,6 @@ export const subtradeHistory = async (req: Request, res: Response) => {
             }
         ]);
 
-        //                 if (data.buyKitePrice !== 0 && data.isSelled === false) {
-        //                     const findUserData: any = await userModel.findById({ _id: id });
-        //                     if (findUserData) {
-        //                         alltrade.push({
-        //                             date: e.tradeTime,
-        //                             StockName: data.tradingsymbol,
-        //                             BuyPrice: data.buyKitePrice,
-        //                             SellPrice: "-",
-        //                             BuyStatus: data.buytradeStatus,
-        //                             SellStatus: "-",
-        //                             profit: "-"
-
-        //                         });
-        //                     }
-        //                 }
-        //                 else if (data.isSelled === true) {
-        //                     const findUserData = await userModel.findById({ _id: id });
-        //                     if (findUserData) {
-        //                         alltrade.push({
-        //                             date: e.tradeTime,
-        //                             StockName: data.tradingsymbol,
-        //                             BuyPrice: data.buyKitePrice,
-        //                             SellPrice: data.sellKitePrice,
-        //                             BuyStatus: data.buytradeStatus,
-        //                             SellStatus: data.selltradeStatus,
-        //                             profit: data.profit
-        //                         });
-        //                     }
-        //                 }
 
         for (const e of tradeData) {
             const userdata = e['trade'];
