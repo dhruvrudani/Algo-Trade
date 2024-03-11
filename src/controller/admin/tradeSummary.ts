@@ -60,7 +60,7 @@ export const get_user_quantity = async (req: Request, res: Response) => {
     }
  }
  
-}
+
 
 //get trade data for admin
 
@@ -132,8 +132,7 @@ export const user_trade_get = async (req: Request, res: Response) => {
         }
 
         return res.status(200).json(new apiResponse(200, "all trades data", { tradedata }, {}));
-
-    } catch (error) {
+     } catch (error) {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 
