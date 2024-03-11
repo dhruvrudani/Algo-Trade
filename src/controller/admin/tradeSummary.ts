@@ -58,8 +58,8 @@ export const get_user_quantity = async (req: Request, res: Response) => {
         console.error('Error:', error);
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
-}
-
+ }
+ 
 //get trade data for admin
 
 export const trade_get = async (req: Request, res: Response) => {
