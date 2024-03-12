@@ -2,7 +2,8 @@ import config from 'config'
 const nodemailer = require('nodemailer');
 const nodeMail: any = config.get('nodeMail')
 
-export const sendEmailHelper = async (email, otp, subject) => {
+export const sendEmailHelper = async (email, otp ) => {
+	console.log('sendEmail runing  :>> ',);
 	var transporter = nodemailer.createTransport({
 		host: "smtp.gmail.com",
 		port: 465,
@@ -16,7 +17,7 @@ export const sendEmailHelper = async (email, otp, subject) => {
 	let mailOptions = {
 		from: 'bhv1912@gmail.com',
 		to: email,
-		subject: subject,
+		subject: otp,
 		text: 'That was easy!',
 		html: ` 
         <html lang="en">

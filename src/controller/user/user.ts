@@ -11,6 +11,7 @@ import jwt from "jsonwebtoken";
 import { checkPreferences } from "joi";
 import bcrypt from "bcryptjs";
 import { json } from "body-parser";
+import { sendEmailHelper } from "../../helpers";
 // const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect
@@ -407,8 +408,9 @@ export const OtpVerification = async (req: Request, res: Response) => {
             if (data) {
 
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-
-                if (difference <= 60000) {
+                let email = "mitdobariya69@gmail.com"
+                sendEmailHelper(email,difference);
+                if (difference <= 6000000) {
                     if (data.otp === encodeotp) {
 
                         const payload = {
