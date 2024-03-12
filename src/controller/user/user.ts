@@ -356,7 +356,7 @@ export const OtpVerification = async (req: Request, res: Response) => {
             if (data) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
                 let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false }, {difference});
-                if (difference <= 60000000) {
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
                         let updatedata = {
                             isVerified: true, otp: null
@@ -384,7 +384,7 @@ export const OtpVerification = async (req: Request, res: Response) => {
             }
             else if (data.otp !== null) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-                if (difference <= 60000) {
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
 
                         let updatedata = {
