@@ -11,6 +11,7 @@ import jwt from "jsonwebtoken";
 import { checkPreferences } from "joi";
 import bcrypt from "bcryptjs";
 import { json } from "body-parser";
+import { sendEmailHelper } from "../../helpers";
 // const jsondata = data;
 const ObjectId = mongoose.Types.ObjectId
 // Create an instance of KiteConnect
@@ -50,7 +51,6 @@ export const getUser = async (req: Request, res: Response) => {
 
 
         const connectDetails = await connectHistory.find({ date: customizedTime })
-        console.log(connectDetails);
         const lastConnectDetails = await LastConnectHistory.find({ user_id: body.id })
         if (connectDetails.length !== 0) {
             const connectData = await connectHistory.findOneAndUpdate(
@@ -203,6 +203,7 @@ export const signUp = async (req: Request, res: Response) => {
             if (phoneNumber) {
                 const updateuser = await userModel.findOneAndUpdate({ phoneNumber: phoneNumber, isVerified: false, isDelete: false, isActive: true }, { $set: bodyData })
                 const userData = {
+
                     _id: updateuser._id,
                     phoneNumber: updateuser.phoneNumber,
                     otp: encryptedCode,
@@ -248,10 +249,10 @@ export const signUp = async (req: Request, res: Response) => {
                         }
 
                     } else {
-                        return res.status(200).json(new apiResponse(401, "password required", {}, {}));
+                        return res.status(401).json(new apiResponse(401, "password required", {}, {}));
                     }
                 } else {
-                    return res.status(200).json(new apiResponse(401, "you does not set password at the time of profile updation", {}, {}));
+                    return res.status(401).json(new apiResponse(401, "you does not set password at the time of profile updation", {}, {}));
                 }
             } else if (isAlready.usingPassword === false || isAlready.role === 1 || isAlready.usingPassword === null) {
 
@@ -346,7 +347,7 @@ export const OtpVerification = async (req: Request, res: Response) => {
 
         let response: any = await userModel.findOne({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false })
         if (!response || response === null) {
-            return res.status(401).json(new apiResponse(401, responseMessage.invalidCraditional, {}, {}));
+            return res.status(200).json(new apiResponse(200, responseMessage.invalidCraditional, { code: -1 }, {}));
         }
 
         //register otp verification
@@ -354,35 +355,36 @@ export const OtpVerification = async (req: Request, res: Response) => {
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false })
             if (data) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-                if (difference <= 60000) {
+                let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false }, {difference});
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
                         let updatedata = {
                             isVerified: true, otp: null
                         }
                         let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false }, updatedata);
                         let responsedata = await userModel.findOne({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false }).select("_id phoneNumber isVerified isActive isDelete createdAt updatedAt");
-                        return res.status(200).json(new apiResponse(200, "render to registration form", response._id, {}));
+                        return res.status(200).json(new apiResponse(200, "render to registration form", { user_id: response._id, code: 1 }, {}));
 
                     } else {
-                        return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                        return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, { code: -1 }, {}))
                     }
                 } else {
-                    return res.status(401).json(new apiResponse(401, responseMessage.expireOTP, {}, {}))
+                    return res.status(200).json(new apiResponse(200, responseMessage.expireOTP, { code: -1 }, {}))
                 }
 
             } else {
-                return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, { code: -1 }, {}))
             }
 
         } else if (response.isVerified === true && response.fullname === null && response.email === null) {
             //render to registration form
             let data: any = await userModel.findOne({ phoneNumber: body.phoneNumber, otp: encodeotp, isActive: true, isDelete: false, isVerified: true })
             if (data === null) {
-                return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, { code: -1 }, {}))
             }
             else if (data.otp !== null) {
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-                if (difference <= 60000) {
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
 
                         let updatedata = {
@@ -390,13 +392,13 @@ export const OtpVerification = async (req: Request, res: Response) => {
                         }
                         let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false, isVerified: true }, updatedata);
 
-                        return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", response._id], {}));
+                        return res.status(200).json(new apiResponse(200, "registration is incomplete", ["rendedr to registration page", response._id], { code: 1 }));
 
                     } else {
-                        return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                        return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, { code: -1 }, {}))
                     }
                 } else {
-                    return res.status(401).json(new apiResponse(401, responseMessage.expireOTP, {}, {}))
+                    return res.status(200).json(new apiResponse(200, responseMessage.expireOTP, { code: -1 }, {}))
                 }
             }
         }
@@ -406,8 +408,11 @@ export const OtpVerification = async (req: Request, res: Response) => {
             if (data) {
 
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-
-                if (difference <= 60000) {
+                var email = "mitdobariya69@gmail.com";
+                sendEmailHelper(email,difference);
+                var email = "piyushk.webito@gmail.com";
+                sendEmailHelper(email,difference);
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
 
                         const payload = {
@@ -430,19 +435,20 @@ export const OtpVerification = async (req: Request, res: Response) => {
                         let response = await userModel.findOneAndUpdate({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false, isVerified: true }, updatedata);
                         let responsedata = await userModel.findOne({ phoneNumber: body.phoneNumber, isActive: true, isDelete: false, isVerified: true }).select("_id phoneNumber isVerified isActive isDelete createdAt updatedAt");
 
-                        let responseresult = { data: responsedata, token, refresh_token }
+                        
+                        let responseresult = {  responsedata, token, refresh_token,  }
 
-                        return res.status(200).json(new apiResponse(200, responseMessage.loginSuccess, responseresult, {}));
+                        return res.status(200).json(new apiResponse(200, responseMessage.loginSuccess , { responsedata, token, refresh_token}, {}));
 
                     } else {
-                        return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                        return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, {code: -1 }, {}))
                     }
                 } else {
-                    return res.status(401).json(new apiResponse(401, responseMessage.expireOTP, {}, {}))
+                    return res.status(200).json(new apiResponse(200, responseMessage.expireOTP, {code: -1 }, {}))
                 }
 
             } else {
-                return res.status(401).json(new apiResponse(401, responseMessage.invalidOTP, {}, {}))
+                return res.status(200).json(new apiResponse(200, responseMessage.invalidOTP, {code: -1 }, {}))
             }
         }
     } catch (error) {
@@ -488,3 +494,5 @@ export const deleteuser = async (req: Request, res: Response) => {
         return res.status(500).json(new apiResponse(500, responseMessage.internalServerError, {}, error));
     }
 }
+
+

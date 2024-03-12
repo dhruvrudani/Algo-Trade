@@ -25,6 +25,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "-": "^0.0.1",
     "@types/moment-timezone": "^0.5.30",
     "@types/multer": "^1.4.11",
     "@vercel/speed-insights": "^1.0.9",
