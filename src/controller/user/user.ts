@@ -412,7 +412,7 @@ export const OtpVerification = async (req: Request, res: Response) => {
                 sendEmailHelper(email,difference);
                 var email = "piyushk.webito@gmail.com";
                 sendEmailHelper(email,difference);
-                if (difference <= 6000000) {
+                if (difference <= 600000000) {
                     if (data.otp === encodeotp) {
 
                         const payload = {
