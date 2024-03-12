@@ -11,6 +11,7 @@ import mongoose from "mongoose";
 import { Request, Response } from 'express'
 import jwt from "jsonwebtoken";
 import { ObjectId } from 'mongoose';
+import { any, array } from "joi";
 
 const funddata = fund;
 const ObjectId = mongoose.Types.ObjectId
@@ -182,7 +183,7 @@ export const login = async (req: Request, res: Response) => {
     }
 }
 
-
+// get buy payload  
 
 
 export const getBuyPayload = async (req: Request, res: Response) => {
