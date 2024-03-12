@@ -37,7 +37,8 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: String, default: indiaTime },
     updatedAt: { type: String, default: indiaTime },
     otpExpire: { type: String, default: indiaTime },
-    req_tok_time: { type: String, default: null }
+    req_tok_time: { type: String, default: null },
+    difference: { type: String, default: null }
 })
 
 
