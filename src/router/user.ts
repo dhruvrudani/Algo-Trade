@@ -44,5 +44,5 @@ router.get('/generate-sha256')
 router.post('/req',test_1)
 router.post('/test1',testkite)
 
-router.use(userJWT)
+// router.use(userJWT)
 export const userRouter = router
