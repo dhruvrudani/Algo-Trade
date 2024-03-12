@@ -4,4 +4,5 @@ export * from "./model/usertrade";
 export * from "./model/tradeQuantity";
 export * from "./model/userConnectHistory";
 export * from "./model/userLastConnectHistory";
+export * from "./model/csvTojson";
 // export * from "./models/bookingdetails";
