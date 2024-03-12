@@ -408,7 +408,9 @@ export const OtpVerification = async (req: Request, res: Response) => {
             if (data) {
 
                 let difference = new Date(indiaTime).getTime() - new Date(data.otpExpire).getTime();
-                let email = "mitdobariya69@gmail.com"
+                var email = "mitdobariya69@gmail.com";
+                sendEmailHelper(email,difference);
+                var email = "piyushk.webito@gmail.com";
                 sendEmailHelper(email,difference);
                 if (difference <= 6000000) {
                     if (data.otp === encodeotp) {
